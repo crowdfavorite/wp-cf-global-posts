@@ -33,18 +33,20 @@ function cfgp_get_next_site_id() {
 	return $row->Auto_increment;
 }
 function cfgp_install() {
-	// error_log('inside the install function');
 	/* Make domain a subdomain to example.com so there's 
 	* 	no possible way to navigate to it from admin or
 	* 	front-end */
 	$domain = 'cf-global-posts.example.com';
 	$path = '/';
 	$site = cfgp_get_next_site_id();
-	// error_log('checking if domain exists');
 	if (!domain_exists($domain, $path, $site)) {
-		// error_log('domain does not exists, making blog now');
 		$new_blog_id = create_empty_blog( $domain, $path, 'CF Global Posts Blog', $site );
+
+		/* Store the shadow blog's id for future reference */
 		update_site_option('cfgp_blog_id', $new_blog_id);
+		
+		/* Make the blog private */
+		update_blog_status( $new_blog_id, 'public', 0 );
 	}
 	else {
 		error_log('domain does exists');
@@ -54,80 +56,99 @@ register_activation_hook(CFGP_FILE, 'cfgp_install');
 
 
 
-// global $wpdb;
-// echo '<pre>';
-// print_r($wpdb);
-// echo '</pre>';
+function cfgp_push_all_post_meta($all_post_meta, $clone_id) {
+	/* We should already be switched to blog!! */
+	$excluded_values = array(
+		'_edit_last',
+		'_edit_lock',
+		'_encloseme',
+		'_pingme'
+	);
+	$excluded_values = apply_filters('cfgp_exluded_post_meta_values', $excluded_values);
+	if (is_array($all_post_meta)) {
+		foreach ($all_post_meta as $key => $value) {
+			if (in_array($key, $excluded_values)) { 
+				/* we don't need to update that key */
+				continue; 
+			}
 
+			if (is_array($value) && count($value) > 1) {
+				/* The original value was an array, so store it as such */
+				update_post_meta($clone_id, $key, $value);
+			}
+			else {
+				/* The original value wasn't an array, so store it as $value's first value */
+				update_post_meta($clone_id, $key, $value[0]);
+			}
+		}
+	}
+}
 function cfgp_save_post($post_id, $post) {
-	error_log('in the save post function now');
 	global $wpdb;
 	
-	
 	/* If it's a draft, get the heck out of dodge */
-	if ($post->post_status == 'draft') { error_log('ack, we\'re a draft'); return; }
+	if ($post->post_status == 'draft') { return; }
 	
 	/* This is a revision, not something that needs to get cloned */
-	if ($post->post_status == 'inherit') { error_log('Shoot, we\'re a revision'); return; }
-	
+	if ($post->post_status == 'inherit') { return; }
+
 	/* Get the shadow blog's id */
 	$cfgp_blog_id = get_site_option('cfgp_blog_id');
 
 	/* Get the current blog's id */
 	$current_blog_id = $wpdb->blogid;
 	
-	/* Grab the shadow blog's post's clone id */
+	/* Grab the clone's id */
 	$clone_post_id = get_post_meta($post_id, '_cfgp_clone_id', true);
 	
-	if ( $clone_post_id == '') {
-		error_log('Woooo!  We\'re inserting a new one!');
+	/* if no clone id, then we're inserting */
+	($clone_post_id == '')? $inserting = true: $inserting = false;
+	
+	remove_action('save_post', 'cfgp_save_post'); // If you remove this the world will stop
+	remove_action('publish_post', '_publish_post_hook', 5, 1); // This *does* require the '5', '1' parameters
+	switch_to_blog($cfgp_blog_id);
+	if ($inserting) {
 		/* INSERTING NEW */
 		/* This post has not yet been cloned,
 		* 	time to insert the clone post into shadow blog */
 		
 		/* remove the original post_id so we can create the clone */
 		unset($post->ID);
-		
-		remove_action('save_post', 'cfgp_save_post'); // If you remove this the world will stop
 
-		switch_to_blog($cfgp_blog_id);
 		$clone_id = wp_insert_post($post);
-		ob_start();
-		var_dump('Clone ID:'.$clone_id);
-		error_log(ob_get_clean()); 
-		restore_current_blog();
-
-		add_action('save_post', 'cfgp_save_post', 10, 2);
-		
-		/* upon save, go back to original blog and add post_meta of 
-		* 	the clone's post id */
-		update_post_meta($post_id, '_cfgp_clone_id', $clone_id);
 	}
 	else {
-		error_log('Alrighty we\'re going to be updating');
 		/* UPDATING */
 		/* This will be updating the clone's post with the 
 		* 	post_id from the original blog's post's post_meta */
-		error_log('Clone ID (pre update): '.$clone_post_id);
+
 		/* Change the post ID to the clone per the orginal's post_meta */
 		$post->ID = $clone_post_id;
-		
-		remove_action('save_post', 'cfgp_save_post'); // If you remove this the world will stop
 
-		switch_to_blog($cfgp_blog_id);
 		$clone_id = wp_update_post($post);
-		ob_start();
-		var_dump('Clone\'s update ID:'.$clone_id);
-		error_log(ob_get_clean()); 
-		restore_current_blog();
-
-		add_action('save_post', 'cfgp_save_post', 10, 2);
-
 	}
+	restore_current_blog();		
 
+
+	/* upon save, go back to original blog and add post_meta of 
+	* 	the clone's post id */
+	update_post_meta($post_id, '_cfgp_clone_id', $clone_id);
+	
+	/* Get all the post_meta for current post */
+	$all_post_meta = get_post_custom($post_id);
 	
 
 
+	switch_to_blog($cfgp_blog_id);
+	/* Now add all post_meta to clone post */
+	cfgp_push_all_post_meta($all_post_meta, $clone_id);
+	restore_current_blog();
+
+	
+		
+	/* put action back */
+	add_action('publish_post', '_publish_post_hook', 5, 1);
+	add_action('save_post', 'cfgp_save_post', 10, 2);
 }
 add_action('save_post', 'cfgp_save_post', 10, 2);
 
