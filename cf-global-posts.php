@@ -138,15 +138,13 @@ function cfgp_save_post($post_id, $post) {
 	$all_post_meta = get_post_custom($post_id);
 	
 
-
-	switch_to_blog($cfgp_blog_id);
 	/* Now add all post_meta to clone post */
+	switch_to_blog($cfgp_blog_id);
 	cfgp_push_all_post_meta($all_post_meta, $clone_id);
 	restore_current_blog();
 
-	
 		
-	/* put action back */
+	/* put actions back */
 	add_action('publish_post', '_publish_post_hook', 5, 1);
 	add_action('save_post', 'cfgp_save_post', 10, 2);
 }
