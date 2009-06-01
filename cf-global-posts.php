@@ -83,6 +83,15 @@ function cfgp_do_categories($cfgp_blog_id, $clone_id) {
 
 	restore_current_blog();
 }
+function cfgp_do_tags($cfgp_blog_id, $clone_id) {
+	/* Add or remove tags as needed.  We aren't
+	* 	doing much checking, b/c WP does it for us */
+	$tags = $_POST['tags_input'];
+	
+	switch_to_blog($cfgp_blog_id);
+	wp_set_post_tags($clone_id, $tags);
+	restore_current_blog();
+}
 function cfgp_push_all_post_meta($all_post_meta, $clone_id) {
 	/* We should already be switched to blog!! */
 	$excluded_values = array(
@@ -145,7 +154,7 @@ function cfgp_save_post($post_id, $post) {
 	/* if no clone id, then we're inserting a new post*/
 	($clone_post_id == '')? $inserting = true: $inserting = false;
 	
-	remove_action('save_post', 'cfgp_save_post'); // If you remove this the world will stop
+	remove_action('save_post', 'cfgp_save_post'); // If you remove this the world will stop (it goes into an infinite loop if this isn't here...possibly a black hole will suck you inside)
 	remove_action('publish_post', '_publish_post_hook', 5, 1); // This *does* require the '5', '1' parameters
 	switch_to_blog($cfgp_blog_id);
 	if ($inserting) {
@@ -177,6 +186,10 @@ function cfgp_save_post($post_id, $post) {
 	cfgp_do_categories($cfgp_blog_id, $clone_id);
 
 
+	/***********
+	* TAG WORK *
+	***********/
+	cfgp_do_tags($cfgp_blog_id, $clone_id);
 
 	/*****************
 	* POST META WORK *
@@ -189,6 +202,36 @@ function cfgp_save_post($post_id, $post) {
 	add_action('save_post', 'cfgp_save_post', 10, 2);
 }
 add_action('save_post', 'cfgp_save_post', 10, 2);
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
 
 
 
