@@ -85,7 +85,7 @@ function cfgp_do_categories($cfgp_blog_id, $clone_id) {
 }
 function cfgp_do_tags($cfgp_blog_id, $clone_id) {
 	/* Add or remove tags as needed.  We aren't
-	* 	doing much checking, b/c WP does it for us */
+	* 	doing checking, b/c WP does it for us */
 	$tags = $_POST['tags_input'];
 	
 	switch_to_blog($cfgp_blog_id);
