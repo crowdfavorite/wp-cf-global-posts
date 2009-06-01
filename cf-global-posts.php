@@ -142,7 +142,7 @@ function cfgp_save_post($post_id, $post) {
 	/* Grab the clone's id */
 	$clone_post_id = get_post_meta($post_id, '_cfgp_clone_id', true);
 	
-	/* if no clone id, then we're inserting */
+	/* if no clone id, then we're inserting a new post*/
 	($clone_post_id == '')? $inserting = true: $inserting = false;
 	
 	remove_action('save_post', 'cfgp_save_post'); // If you remove this the world will stop
