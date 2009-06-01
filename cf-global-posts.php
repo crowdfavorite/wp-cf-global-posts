@@ -142,9 +142,13 @@ function cfgp_save_post($post_id, $post) {
 	/* This is a revision, not something that needs to get cloned */
 	if ($post->post_status == 'inherit') { return; }
 
+	do_action('cfgp_switch_to_site'); // If you're doing multiple sites, hook in here
+
 	/* Get the shadow blog's id */
 	$cfgp_blog_id = get_site_option('cfgp_blog_id');
-
+	
+	do_action('cfgp_restore_current_site'); // ...again, multiple sites, hook in here 
+	
 	/* Get the current blog's id */
 	$current_blog_id = $wpdb->blogid;
 	
