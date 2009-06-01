@@ -247,7 +247,11 @@ add_action('save_post', 'cfgp_save_post', 10, 2);
 
 
 
-
+/********************************************************************
+* Below are the default functions with the plugin, and till we get  *
+* this finalize a little more, we'll leave them in until we know we *
+* don't need them.                                                  *
+* ******************************************************************/
 
 
 
