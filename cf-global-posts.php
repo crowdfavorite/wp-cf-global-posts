@@ -55,7 +55,34 @@ function cfgp_install() {
 register_activation_hook(CFGP_FILE, 'cfgp_install');
 
 
+function cfgp_do_categories($cfgp_blog_id, $clone_id) {
+	/* Get's the submitted post's categories, 
+	* then pushes to shadow blog's clone post */
 
+	/* Grab category names that the current post belongs to. */
+	if (isset($_POST['post_category']) && is_array($_POST['post_category']) && count($_POST['post_category']) > 0) {
+		/* Post has categories */
+		$cur_cats = $_POST['post_category'];
+	}
+	else {
+		/* Post doesn't have any categories, assign to 'Uncategorized' */
+		$cur_cats = array( get_cat_ID('Uncategorized') );
+	}
+	
+	/* We have id's, now get the names */
+	foreach ($cur_cats as $cat) {
+		$cur_cats_names[] = get_catname( $cat );		
+	}
+	
+	/* Now go to the shadow blog and do the category business...*/
+	switch_to_blog($cfgp_blog_id);
+	
+	/* This function creates the cats if they don't exist, and 
+	* 	then assigns them to the post ID that's passed. */ 	
+	wp_create_categories($cur_cats_names, $clone_id);
+
+	restore_current_blog();
+}
 function cfgp_push_all_post_meta($all_post_meta, $clone_id) {
 	/* We should already be switched to blog!! */
 	$excluded_values = array(
@@ -82,6 +109,20 @@ function cfgp_push_all_post_meta($all_post_meta, $clone_id) {
 			}
 		}
 	}
+}
+function cfgp_do_post_meta($post_id, $cfgp_blog_id, $clone_id) {
+	/* first add post_meta to the original 
+	* 	post of the clone's post id */
+	update_post_meta($post_id, '_cfgp_clone_id', $clone_id);
+	
+	
+	/* Get all the post_meta for current post */
+	$all_post_meta = get_post_custom($post_id);
+
+	/* Now add all post_meta to clone post */
+	switch_to_blog($cfgp_blog_id);
+	cfgp_push_all_post_meta($all_post_meta, $clone_id);
+	restore_current_blog();
 }
 function cfgp_save_post($post_id, $post) {
 	global $wpdb;
@@ -130,18 +171,17 @@ function cfgp_save_post($post_id, $post) {
 	restore_current_blog();		
 
 
-	/* upon save, go back to original blog and add post_meta of 
-	* 	the clone's post id */
-	update_post_meta($post_id, '_cfgp_clone_id', $clone_id);
-	
-	/* Get all the post_meta for current post */
-	$all_post_meta = get_post_custom($post_id);
-	
+	/****************
+	* CATEGORY WORK *
+	* **************/
+	cfgp_do_categories($cfgp_blog_id, $clone_id);
 
-	/* Now add all post_meta to clone post */
-	switch_to_blog($cfgp_blog_id);
-	cfgp_push_all_post_meta($all_post_meta, $clone_id);
-	restore_current_blog();
+
+
+	/*****************
+	* POST META WORK *
+	*****************/
+	cfgp_do_post_meta($post_id, $cfgp_blog_id, $clone_id);
 
 		
 	/* put actions back */
@@ -149,11 +189,6 @@ function cfgp_save_post($post_id, $post) {
 	add_action('save_post', 'cfgp_save_post', 10, 2);
 }
 add_action('save_post', 'cfgp_save_post', 10, 2);
-
-
-
-
-
 
 
 
