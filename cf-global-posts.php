@@ -85,7 +85,7 @@ function cfgp_are_we_inserting($post_id) {
 function cfgp_do_the_post($post, $cfgp_blog_id) {
 	/* Check to see if we're inserting the post, or updating an existing */
 	$clone_post_id = cfgp_are_we_inserting($post->ID);
-	
+
 	switch_to_blog($cfgp_blog_id);
 	cfgp_remove_post_save_actions();
 	if ($clone_post_id == '') {
@@ -493,8 +493,8 @@ function cfgp_operations_form() {
 function cfgp_admin_menu() {
 	global $wpdb;
 	
-	// force this to be on the main blog
-	if ($wpdb->siteid != 1) { return; }
+	// force this to be only visible to site admins
+	if (!is_site_admin()) { return; }
 	
 	if (current_user_can('manage_options')) {
 		add_options_page(
