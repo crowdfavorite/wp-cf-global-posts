@@ -23,9 +23,9 @@ else if (is_file(dirname(__FILE__).'/'.basename(__FILE__))) {
 
 
 
-
-
-
+/*************************
+* Installation Functions *
+*************************/
 function cfgp_get_next_site_id() {
 	/* Grab the next open site id */
 	global $wpdb;
@@ -57,10 +57,54 @@ register_activation_hook(CFGP_FILE, 'cfgp_install');
 
 
 
+/**************************
+* Post Updating Functions *
+**************************/
+function cfgp_remove_post_save_actions() {
+	remove_action('save_post', 'cfgp_clone_post_on_publish'); // If you remove this the world will stop (it goes into an infinite loop if this isn't here)
+	remove_action('publish_post', '_publish_post_hook', 5, 1); // This *does* require the '5', '1' parameters
+}
+function cfgp_add_post_save_actions() {
+	add_action('publish_post', '_publish_post_hook', 5, 1);
+	add_action('save_post', 'cfgp_clone_post_on_publish', 10, 2);
+}
+function cfgp_get_shadow_blog_id() {
+	do_action('cfgp_switch_to_site'); // If you're doing multiple sites, hook in here
 
+	/* Get the shadow blog's id */
+	$cfgp_blog_id = get_site_option('cfgp_blog_id');
 
+	do_action('cfgp_restore_current_site'); // ...again, multiple sites, hook in here
+	
+	return $cfgp_blog_id;
+}
+function cfgp_do_the_post($post, $cfgp_blog_id, $inserting = true, $clone_post_id = false) {
+	switch_to_blog($cfgp_blog_id);
+	cfgp_remove_post_save_actions();
+	if ($inserting) {
+		/* INSERTING NEW */
+		/* This post has not yet been cloned,
+		* 	time to insert the clone post into shadow blog */
+	
+		/* remove the original post_id so we can create the clone */
+		unset($post->ID);
 
+		$clone_id = wp_insert_post($post);
+	}
+	else {
+		/* UPDATING */
+		/* This will be updating the clone's post with the 
+		* 	post_id from the original blog's post's post_meta */
 
+		/* Change the post ID to the clone per the orginal's post_meta */
+		$post->ID = $clone_post_id;
+
+		$clone_id = wp_update_post($post);
+	}
+	restore_current_blog();
+	cfgp_add_post_save_actions();
+	return $clone_id; 
+}
 function cfgp_do_categories($cfgp_blog_id, $clone_id, $cur_cats_names) {
 	/* $cur_cats_names should be an array of category names only */
 	
@@ -154,6 +198,12 @@ function cfgp_do_post_meta($post_id, $cfgp_blog_id, $clone_id) {
 	
 	return $results;
 }
+
+
+
+/***************************
+* Functions called from WP *
+***************************/
 function cfgp_clone_post_on_publish($post_id, $post) {
 	global $wpdb;
 	
@@ -162,7 +212,6 @@ function cfgp_clone_post_on_publish($post_id, $post) {
 	
 	/* This is a revision, not something that needs to get cloned */
 	if ($post->post_status == 'inherit') { return; }
-	error_log('saving published post now');
 
 	/* Get the Shadow Blog's ID */
 	$cfgp_blog_id = cfgp_get_shadow_blog_id();
@@ -206,10 +255,6 @@ function cfgp_clone_post_on_publish($post_id, $post) {
 	foreach ($cur_cats as $cat) {
 		$cur_cats_names[] = get_catname( $cat );	
 	}
-	ob_start();
-	print_r($cur_cats_names);
-	error_log(ob_get_clean());
-
 	$cat_results = cfgp_do_categories($cfgp_blog_id, $clone_id, $cur_cats_names);
 
 
@@ -226,8 +271,9 @@ function cfgp_clone_post_on_publish($post_id, $post) {
 
 
 
-
-	/* Add the return values for this post */
+	/* This is a handy array of results, for troubleshooting
+	* 	they're not returned on post publish, but can be put
+	* 	out to the error log */
 	$single_post_results[] = array(
 		'original_post' => $post->ID,
 		'clone_id' => $clone_id,
@@ -235,68 +281,8 @@ function cfgp_clone_post_on_publish($post_id, $post) {
 		'tag_results' => $tag_results, 
 		'post_meta_results' => $post_meta_results
 	);
-	ob_start();
-	print_r($single_post_results);
-	error_log(ob_get_clean()."\n");
-
 }
 add_action('save_post', 'cfgp_clone_post_on_publish', 10, 2);
-
-
-
-function cfgp_remove_post_save_actions() {
-	remove_action('save_post', 'cfgp_clone_post_on_publish'); // If you remove this the world will stop (it goes into an infinite loop if this isn't here)
-	remove_action('publish_post', '_publish_post_hook', 5, 1); // This *does* require the '5', '1' parameters
-}
-function cfgp_add_post_save_actions() {
-	add_action('publish_post', '_publish_post_hook', 5, 1);
-	add_action('save_post', 'cfgp_clone_post_on_publish', 10, 2);
-}
-function cfgp_do_the_post($post, $cfgp_blog_id, $inserting = true, $clone_post_id = false) {
-	switch_to_blog($cfgp_blog_id);
-	cfgp_remove_post_save_actions();
-	if ($inserting) {
-		/* INSERTING NEW */
-		/* This post has not yet been cloned,
-		* 	time to insert the clone post into shadow blog */
-	
-		/* remove the original post_id so we can create the clone */
-		unset($post->ID);
-
-		$clone_id = wp_insert_post($post);
-	}
-	else {
-		/* UPDATING */
-		/* This will be updating the clone's post with the 
-		* 	post_id from the original blog's post's post_meta */
-
-		/* Change the post ID to the clone per the orginal's post_meta */
-		$post->ID = $clone_post_id;
-
-		$clone_id = wp_update_post($post);
-	}
-	restore_current_blog();
-	cfgp_add_post_save_actions();
-	return $clone_id; 
-}
-function cfgp_get_shadow_blog_id() {
-	do_action('cfgp_switch_to_site'); // If you're doing multiple sites, hook in here
-
-	/* Get the shadow blog's id */
-	$cfgp_blog_id = get_site_option('cfgp_blog_id');
-
-	do_action('cfgp_restore_current_site'); // ...again, multiple sites, hook in here
-	
-	return $cfgp_blog_id;
-}
-
-
-
-
-
-
-
-
 
 function batch_import_blog($blog_id) {
 	switch_to_blog($blog_id);
@@ -384,14 +370,6 @@ function batch_import_blog($blog_id) {
 		$my_posts = array('NO POSTS');
 	}
 
-	ob_start();
-	print_r($single_post_results);
-	error_log(ob_get_clean()."\n");
-
-	
-	
-	restore_current_blog();
-	
 	$results = array(
 		'status' => 'finished', 
 		'blog' => $blog_id, 
