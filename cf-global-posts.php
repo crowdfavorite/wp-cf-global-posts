@@ -162,6 +162,7 @@ function cfgp_clone_post_on_publish($post_id, $post) {
 	
 	/* This is a revision, not something that needs to get cloned */
 	if ($post->post_status == 'inherit') { return; }
+	error_log('saving published post now');
 
 	/* Get the Shadow Blog's ID */
 	$cfgp_blog_id = cfgp_get_shadow_blog_id();
@@ -180,10 +181,12 @@ function cfgp_clone_post_on_publish($post_id, $post) {
 	($clone_post_id == '')? $inserting = true: $inserting = false;
 	
 	if ($inserting) {
-		cfgp_do_the_post($post, $cfgp_blog_id, $inserting);
+		$old_post_id = $post->ID;
+		$clone_id = cfgp_do_the_post($post, $cfgp_blog_id, $inserting);
+		$post->ID = $old_post_id;
 	}
 	else {
-		cfgp_do_the_post($post, $cfgp_blog_id, $inserting, $clone_post_id);
+		$clone_id = cfgp_do_the_post($post, $cfgp_blog_id, $inserting, $clone_post_id);
 	}
 	
 	
@@ -201,8 +204,12 @@ function cfgp_clone_post_on_publish($post_id, $post) {
 	}
 	/* We have id's, now get the names */
 	foreach ($cur_cats as $cat) {
-		$cur_cats_names[] = get_catname( $cat );		
+		$cur_cats_names[] = get_catname( $cat );	
 	}
+	ob_start();
+	print_r($cur_cats_names);
+	error_log(ob_get_clean());
+
 	$cat_results = cfgp_do_categories($cfgp_blog_id, $clone_id, $cur_cats_names);
 
 
@@ -217,7 +224,20 @@ function cfgp_clone_post_on_publish($post_id, $post) {
 	*****************/
 	$post_meta_results = cfgp_do_post_meta($post_id, $cfgp_blog_id, $clone_id);
 
-	
+
+
+
+	/* Add the return values for this post */
+	$single_post_results[] = array(
+		'original_post' => $post->ID,
+		'clone_id' => $clone_id,
+		'cat_results' => $cat_results, 
+		'tag_results' => $tag_results, 
+		'post_meta_results' => $post_meta_results
+	);
+	ob_start();
+	print_r($single_post_results);
+	error_log(ob_get_clean()."\n");
 
 }
 add_action('save_post', 'cfgp_clone_post_on_publish', 10, 2);
