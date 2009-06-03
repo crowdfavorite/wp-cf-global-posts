@@ -78,10 +78,17 @@ function cfgp_get_shadow_blog_id() {
 	
 	return $cfgp_blog_id;
 }
-function cfgp_do_the_post($post, $cfgp_blog_id, $inserting = true, $clone_post_id = false) {
+function cfgp_are_we_inserting($post_id) {
+	/* Grab the clone's id */
+	return get_post_meta($post_id, '_cfgp_clone_id', true);
+}
+function cfgp_do_the_post($post, $cfgp_blog_id) {
+	/* Check to see if we're inserting the post, or updating an existing */
+	$clone_post_id = cfgp_are_we_inserting($post->ID);
+	
 	switch_to_blog($cfgp_blog_id);
 	cfgp_remove_post_save_actions();
-	if ($inserting) {
+	if ($clone_post_id == '') {
 		/* INSERTING NEW */
 		/* This post has not yet been cloned,
 		* 	time to insert the clone post into shadow blog */
@@ -95,10 +102,6 @@ function cfgp_do_the_post($post, $cfgp_blog_id, $inserting = true, $clone_post_i
 		/* UPDATING */
 		/* This will be updating the clone's post with the 
 		* 	post_id from the original blog's post's post_meta */
-
-		/* Change the post ID to the clone per the orginal's post_meta */
-		$post->ID = $clone_post_id;
-
 		$clone_id = wp_update_post($post);
 	}
 	restore_current_blog();
@@ -223,20 +226,9 @@ function cfgp_clone_post_on_publish($post_id, $post) {
 	/************
 	* POST WORK *
 	************/
-	/* Grab the clone's id */
-	$clone_post_id = get_post_meta($post_id, '_cfgp_clone_id', true);
-	
-	/* if no clone id, then we're inserting a new post*/
-	($clone_post_id == '')? $inserting = true: $inserting = false;
-	
-	if ($inserting) {
-		$old_post_id = $post->ID;
-		$clone_id = cfgp_do_the_post($post, $cfgp_blog_id, $inserting);
-		$post->ID = $old_post_id;
-	}
-	else {
-		$clone_id = cfgp_do_the_post($post, $cfgp_blog_id, $inserting, $clone_post_id);
-	}
+	$old_post_id = $post->ID;
+	$clone_id = cfgp_do_the_post($post, $cfgp_blog_id);
+	$post->ID = $old_post_id;
 	
 	
 	/****************
@@ -267,7 +259,7 @@ function cfgp_clone_post_on_publish($post_id, $post) {
 	/*****************
 	* POST META WORK *
 	*****************/
-	$post_meta_results = cfgp_do_post_meta($post_id, $cfgp_blog_id, $clone_id);
+	$post_meta_results = cfgp_do_post_meta($post->ID, $cfgp_blog_id, $clone_id);
 
 
 
@@ -307,17 +299,11 @@ function batch_import_blog($blog_id, $offset, $increment) {
 			/************
 			* POST WORK *
 			************/
-
 			/* Setup post data */
 			the_post(); 
 			
-			/* Save the old post id */
 			$old_post_id = $post->ID;
-			
-			/* inserting new post, never updating during an import. */
-			$clone_id = cfgp_do_the_post($post, $cfgp_blog_id, true); 
-			
-			/* restore old post id */
+			$clone_id = cfgp_do_the_post($post, $cfgp_blog_id);
 			$post->ID = $old_post_id;
 	
 			
@@ -378,7 +364,6 @@ function batch_import_blog($blog_id, $offset, $increment) {
 		'posts' => $my_posts, 
 		'result_details' => $single_post_results,
 		'next_offset' => ($offset + $increment),
-		'total_count' => 
 	);
 	return $results;
 }
@@ -428,10 +413,17 @@ function cfgp_operations_form() {
 		<h2><?php echo __('CF Global Posts Operations', ''); ?></h2>
 		<script type="text/javascript">
 			jQuery(function($) {
-				$("button[id^='start_import_blog_']").click(function(){
+				import_box = $("#doing-import");
+				import_box.hide();
+				
+				import_buttons = $("button[id^='start_import_blog_']");
+				
+				import_buttons.click(function(){
+					$(document).scrollTop(0);
 					blogId = $(this).siblings("input[name='blog_id']").val();
+					import_buttons.attr('disabled','disabled');
 					do_batch(blogId, 0);
-					
+					import_box.show().removeClass('updated fade').children('h2').text('Doing an import, do not navigate away from this page...').siblings("#import-ticks").text('');
 					return false;
 				});
 				function do_batch(blogId, offset_amount) {
@@ -443,13 +435,13 @@ function cfgp_operations_form() {
 							offset: offset_amount
 						},
 						function(r){
-							results_box = $("#blog_import_results_"+blogId);
 							if (r.status == 'finished') {
-								results_box.html('<p>Finished</p>');
+								import_box.addClass('updated fade').children('h2').text('Finished Importing!')
+								import_buttons.removeAttr('disabled');
 								return;
 							}
 							else {
-								results_box.html(results_box.html()+' # ');
+								import_box.children("#import-ticks").text(import_box.children("#import-ticks").text()+' # ');
 								do_batch(blogId, r.next_offset);
 							}
 						},
@@ -458,6 +450,10 @@ function cfgp_operations_form() {
 				}
 			});
 		</script>
+		<div id="doing-import" style="border: 1px solid #464646; margin: 20px 0; padding: 10px 20px;">
+			<h2></h2>
+			<p id="import-ticks"></p>
+		</div>
 		<table>
 			<tbody>
 			<?php
@@ -468,6 +464,7 @@ function cfgp_operations_form() {
 			$results = $wpdb->get_results($sql);
 			if (is_array($results)) {
 				foreach ($results as $blog) {
+					if ($blog->blog_id == $shadow_blog) { continue; }
 					echo '
 						<tr>
 							<td>
@@ -478,7 +475,6 @@ function cfgp_operations_form() {
 								</form>
 							</td>
 							<th style="text-align: right;">'.$blog->domain.'</th>
-							<td id="blog_import_results_'.attribute_escape($blog->blog_id).'"></td>
 						</tr>
 					';
 				}
@@ -489,6 +485,7 @@ function cfgp_operations_form() {
 			?>
 			</tbody>
 		</table>
+
 	</div><!--/wrap-->
 	<?php
 }
