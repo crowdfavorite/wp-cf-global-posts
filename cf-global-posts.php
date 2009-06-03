@@ -284,12 +284,13 @@ function cfgp_clone_post_on_publish($post_id, $post) {
 }
 add_action('save_post', 'cfgp_clone_post_on_publish', 10, 2);
 
-function batch_import_blog($blog_id) {
+function batch_import_blog($blog_id, $offset, $increment) {
 	switch_to_blog($blog_id);
-	/* http://codex.wordpress.org/Template_Tags/query_posts#Time_Parameters */
+	
+	/* http://codex.wordpress.org/Template_Tags/query_posts#Offset_Parameter */
 	$args = array(
-		'offset' => '0',
-		'showposts' => '50'
+		'offset' => $offset,
+		'showposts' => $increment
 	);
 
 
@@ -301,6 +302,7 @@ function batch_import_blog($blog_id) {
 	
 	if (have_posts()) {
 		global $post;
+		$batch_status = 'running';
 		while (have_posts()) {
 			/************
 			* POST WORK *
@@ -367,14 +369,17 @@ function batch_import_blog($blog_id) {
 		}
 	}
 	else {
-		$my_posts = array('NO POSTS');
+		$batch_status = 'finished';
 	}
 
 	$results = array(
-		'status' => 'finished', 
+		'status' => $batch_status, 
 		'blog' => $blog_id, 
 		'posts' => $my_posts, 
-		'result_details' => $single_post_results);
+		'result_details' => $single_post_results,
+		'next_offset' => ($offset + $increment),
+		'total_count' => 
+	);
 	return $results;
 }
 
@@ -395,17 +400,16 @@ function cfgp_request_handler() {
 				break;
 				
 			case 'add_blog_to_shadow_blog':
+				/* Set how many blog posts to do at once */
+				$increment = 2;
+				
+				/* Grab the ID of the blog we're pulling from */
 				$blog_id =  (int) $_POST['blog_id'];
-				$offset = "-1 month";
 				
-				if (isset($batch_time)) {
-					$batch_time = (int) $_POST['batch_time'];
-				}
-				else {
-					$batch_time = time();
-				}
+				/* Grab our offset */
+				$offset = (int) $_POST['offset'];
 				
-				echo cf_json_encode( batch_import_blog( $blog_id, $batch_time, $offset ) );
+				echo cf_json_encode( batch_import_blog( $blog_id, $offset, $increment ) );
 				
 				exit();
 				break;
@@ -426,27 +430,32 @@ function cfgp_operations_form() {
 			jQuery(function($) {
 				$("button[id^='start_import_blog_']").click(function(){
 					blogId = $(this).siblings("input[name='blog_id']").val();
+					do_batch(blogId, 0);
+					
+					return false;
+				});
+				function do_batch(blogId, offset_amount) {
 					$.post(
 						'index.php',
 						{
 							cf_action:'add_blog_to_shadow_blog',
-							blog_id: blogId
+							blog_id: blogId,
+							offset: offset_amount
 						},
 						function(r){
 							results_box = $("#blog_import_results_"+blogId);
 							if (r.status == 'finished') {
-								// alert(r.result_details);
 								results_box.html('<p>Finished</p>');
+								return;
 							}
 							else {
 								results_box.html(results_box.html()+' # ');
-								
+								do_batch(blogId, r.next_offset);
 							}
 						},
 						'json'
 					);
-					return false;
-				});
+				}
 			});
 		</script>
 		<table>
@@ -470,7 +479,8 @@ function cfgp_operations_form() {
 							</td>
 							<th style="text-align: right;">'.$blog->domain.'</th>
 							<td id="blog_import_results_'.attribute_escape($blog->blog_id).'"></td>
-						</tr>';
+						</tr>
+					';
 				}
 			}
 			else {
