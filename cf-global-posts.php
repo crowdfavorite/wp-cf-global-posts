@@ -503,7 +503,6 @@ function cfgp_operations_form() {
 					</thead>
 					<tbody>
 					<?php
-					global $wpdb;
 					$shadow_blog = get_site_option('cfgp_blog_id');
 					$sql = 'SELECT * FROM '.$wpdb->blogs.' ORDER BY site_id, blog_id';
 		
