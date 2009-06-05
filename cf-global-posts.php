@@ -21,6 +21,7 @@ else if (is_file(dirname(__FILE__).'/'.basename(__FILE__))) {
 	define('CFGP_FILE', dirname(__FILE__).'/'.basename(__FILE__));
 }
 
+load_plugin_textdomain('cf-global-posts');
 
 
 /*************************
@@ -416,7 +417,10 @@ function cfgp_is_installed() {
 function cfgp_request_handler() {
 	if (!empty($_GET['cf_action'])) {
 		switch ($_GET['cf_action']) {
-
+			case 'cfgp_admin_js':
+				cfgp_admin_js();
+				die();
+				break;
 		}
 	}
 	if (!empty($_POST['cf_action'])) {
@@ -462,114 +466,128 @@ wp_enqueue_script('jquery');
 
 function cfgp_operations_form() {
 	global $wpdb;
-	if (!cfgp_is_installed()) {
-		?>
-		<div class="wrap">
-			<?php screen_icon(); ?><h2><?php echo __('CF Global Posts Setup', ''); ?></h2>
-			<p>Welcome to the Global Posts Operations page; click the button below to set up the 'Global Blog'</p>
-			<form method="post">
-				<input type="hidden" name="cf_action" value="cfgp_setup_shadow_blog" />
-				<button type="submit">Setup Global Blog Now</button>
-			</form>
-		</div>
-		<?php
-		return;
-	}
-	if (!function_exists('cf_json_encode')) {
-		?>
-		<div class="wrap">
-			<?php screen_icon(); ?><h2><?php echo __('CF Global Posts Operations', ''); ?></h2>
-			<p>This plugin requires functionality contained in the 'cf-compat' plugin.  This plugin must be activated before utilizing this page.</p>
-		</div>
-		<?php
-		return;
-	}
 	?>
 	<div class="wrap">
-		<?php screen_icon(); ?><h2><?php echo __('CF Global Posts Operations', ''); ?></h2>
-		<script type="text/javascript">
-			jQuery(function($) {
-				import_box = $("#doing-import");
-				import_box.hide();
-				
-				import_buttons = $("button[id^='start_import_blog_']");
-				
-				import_buttons.click(function(){
-					$(document).scrollTop(0);
-					blogId = $(this).siblings("input[name='blog_id']").val();
-					import_buttons.attr('disabled','disabled');
-					do_batch(blogId, 0);
-					import_box.show().removeClass('updated fade').children('h2').text('Import in progress, do not navigate away from this page...').siblings("#import-ticks").text('');
-					return false;
-				});
-				function do_batch(blogId, offset_amount) {
-					$.post(
-						'index.php',
-						{
-							cf_action:'add_blog_to_shadow_blog',
-							blog_id: blogId,
-							offset: offset_amount
-						},
-						function(r){
-							if (r.status == 'finished') {
-								import_box.addClass('updated fade').children('h2').text('Finished Importing!').siblings("#import-ticks").text('');
-								import_buttons.removeAttr('disabled');
-								return;
-							}
-							else {
-								import_box.children("#import-ticks").text(import_box.children("#import-ticks").text()+' # ');
-								do_batch(blogId, r.next_offset);
-							}
-						},
-						'json'
-					);
-				}
-			});
-		</script>
-		<div id="doing-import" style="border: 1px solid #464646; margin: 20px 0; padding: 10px 20px;">
-			<h2></h2>
-			<p id="import-ticks"></p>
-		</div>
-		<table class="widefat" style="width: 300px; margin: 20px 0">
-			<thead>
-				<tr>
-					<th scope="col">Blog</th>
-					<th scope="col" style="width: 30px;">Action</th>
-				</tr>
-			</thead>
-			<tbody>
+		<?php screen_icon(); ?>
+		<h2><?php echo __('CF Global Posts Operations', 'cf-global-posts'); ?></h2>
+		<?php
+		if (!function_exists('cf_json_encode')) {
+			?>
+			<p><?php _e('This plugin requires functionality contained in the \'cf-compat\' plugin.  This plugin must be activated before utilizing this page.', 'cf-global-posts'); ?></p>
 			<?php
-			global $wpdb;
-			$shadow_blog = get_site_option('cfgp_blog_id');
-			$sql = 'SELECT * FROM '.$wpdb->blogs.' ORDER BY site_id, blog_id';
-		
-			$results = $wpdb->get_results($sql);
-			if (is_array($results)) {
-				foreach ($results as $blog) {
-					if ($blog->blog_id == $shadow_blog) { continue; }
-					echo '
-						<tr>
-							<th style="text-align: right; padding-top: 11px;">'.$blog->domain.'</th>
-							<td>
-								<form method="post" name="blog_import_'.attribute_escape($blog->blog_id).'" id="blog_import_'.attribute_escape($blog->blog_id).'">
-								<input type="hidden" name="blog_id" value="'.attribute_escape($blog->blog_id).'" />
-								<input type="hidden" name="cf_action" value="add_blog_to_shadow_blog">
-								<button class="button-primary" id="start_import_blog_'.attribute_escape($blog->blog_id).'"/>Import</button>
-								</form>
-							</td>
-						</tr>
-					';
-				}
+			return;
+		}
+		else {
+			if (!cfgp_is_installed()) {
+				?>
+				<h3><?php _e('Global Blog has not been setup','cf-global-posts'); ?></h3>
+				<h4><?php _e('Click the button below to set up the Global Blog', 'cf-global-posts'); ?></h4>
+				<form method="post">
+					<input type="hidden" name="cf_action" value="cfgp_setup_shadow_blog" />
+					<button class="button-primary" type="submit"><?php _e('Setup Global Blog Now', 'cf-global-posts'); ?></button>
+				</form>
+				<?php
 			}
 			else {
-				echo 'No Blogs available';
+				?>
+				<div id="doing-import" style="border: 1px solid #464646; margin: 20px 0; padding: 10px 20px;">
+					<h3></h3>
+					<p id="import-ticks"></p>
+				</div>
+				<table class="widefat" style="width: 300px; margin: 20px 0">
+					<thead>
+						<tr>
+							<th scope="col"><?php _e('Blog Name', 'cf-global-posts'); ?></th>
+							<th scope="col" style="width: 50px; text-align:center;"><?php _e('Action', 'cf-global-posts'); ?></th>
+						</tr>
+					</thead>
+					<tbody>
+					<?php
+					global $wpdb;
+					$shadow_blog = get_site_option('cfgp_blog_id');
+					$sql = 'SELECT * FROM '.$wpdb->blogs.' ORDER BY site_id, blog_id';
+		
+					$results = $wpdb->get_results($sql);
+					if (is_array($results)) {
+						foreach ($results as $blog) {
+							if ($blog->blog_id == $shadow_blog) { continue; }
+							$details = get_blog_details($blog->blog_id);
+							?>
+							<tr>
+								<td style="vertical-align:middle;"><?php echo $details->blogname; ?></th>
+								<td>
+									<form method="post" name="blog_import_<?php echo attribute_escape($blog->blog_id); ?>" id="blog_import_<?php echo attribute_escape($blog->blog_id); ?>">
+									<input type="hidden" name="blog_id" value="<?php echo attribute_escape($blog->blog_id); ?>" />
+									<input type="hidden" name="cf_action" value="add_blog_to_shadow_blog">
+									<button class="button" id="start_import_blog_<?php echo attribute_escape($blog->blog_id); ?>"/><?php _e('Import', 'cf-global-posts'); ?></button>
+									</form>
+								</td>
+							</tr>
+							<?php
+						}
+					}
+					else {
+						_e('No Blogs available', 'cf-global-posts');
+					}
+					?>
+					</tbody>
+				</table>
+			<?php
 			}
-			?>
-			</tbody>
-		</table>
-
+		}
+		?>
 	</div><!--/wrap-->
 	<?php
+}
+
+function cfgp_admin_js() {
+	header('Content-type: text/javascript');
+	?>
+	jQuery(function($) {
+		import_box = $("#doing-import");
+		import_box.hide();
+	
+		import_buttons = $("button[id^='start_import_blog_']");
+	
+		import_buttons.click(function(){
+			$(document).scrollTop(0);
+			blogId = $(this).siblings("input[name='blog_id']").val();
+			import_buttons.attr('disabled','disabled');
+			do_batch(blogId, 0);
+			import_box.show().removeClass('updated fade').children('h3').text('Import in progress, do not navigate away from this page...').siblings("#import-ticks").text('');
+			return false;
+		});
+		function do_batch(blogId, offset_amount) {
+			$.post(
+				'index.php',
+				{
+					cf_action:'add_blog_to_shadow_blog',
+					blog_id: blogId,
+					offset: offset_amount
+				},
+				function(r){
+					if (r.status == 'finished') {
+						import_box.addClass('updated fade').children('h3').text('Finished Importing!').siblings("#import-ticks").text('');
+						import_buttons.removeAttr('disabled');
+						return;
+					}
+					else {
+						import_box.children("#import-ticks").text(import_box.children("#import-ticks").text()+' # ');
+						do_batch(blogId, r.next_offset);
+					}
+				},
+				'json'
+			);
+		}
+	});	<?php
+	die();
+}
+
+function cfgp_admin_head() {
+	echo '<script type="text/javascript" src="'.trailingslashit(get_bloginfo('wpurl')).'index.php?cf_action=cfgp_admin_js"></script>';
+}
+if (isset($_GET['page']) && $_GET['page'] == basename(__FILE__)) {
+	add_action('admin_head', 'cfgp_admin_head');
 }
 
 function cfgp_admin_menu() {
