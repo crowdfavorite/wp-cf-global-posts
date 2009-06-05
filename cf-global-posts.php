@@ -434,7 +434,7 @@ function cfgp_request_handler() {
 				
 			case 'add_blog_to_shadow_blog':
 				/* Set how many blog posts to do at once */
-				$increment = 25;
+				$increment = 10;
 				
 				/* Grab the ID of the blog we're pulling from */
 				$blog_id =  (int) $_POST['blog_id'];
@@ -553,7 +553,7 @@ function cfgp_admin_js() {
 			blogId = $(this).siblings("input[name='blog_id']").val();
 			import_buttons.attr('disabled','disabled');
 			do_batch(blogId, 0);
-			import_box.show().removeClass('updated fade').children('h3').text('Import in progress, do not navigate away from this page...').siblings("#import-ticks").text('');
+			import_box.show().removeClass('updated fade').children('h3').text('Import in progress, do not navigate away from this page...').siblings("#import-ticks").text('#');
 			return false;
 		});
 		function do_batch(blogId, offset_amount) {
