@@ -476,7 +476,7 @@ function cfgp_operations_form() {
 						},
 						function(r){
 							if (r.status == 'finished') {
-								import_box.addClass('updated fade').children('h2').text('Finished Importing!')
+								import_box.addClass('updated fade').children('h2').text('Finished Importing!').siblings("#import-ticks").text('');
 								import_buttons.removeAttr('disabled');
 								return;
 							}
