@@ -147,7 +147,7 @@ function cfgp_do_tags($cfgp_blog_id, $clone_id, $tags) {
 		return true;
 	}
 }
-function cfgp_push_all_post_meta($all_post_meta, $clone_id) {
+function _cfgp_push_all_post_meta($all_post_meta, $clone_id) {
 	/* We should already be switched to blog!! */
 	if (!is_array($all_post_meta)) {
 		/* Require an array */
@@ -194,7 +194,7 @@ function cfgp_do_post_meta($post_id, $cfgp_blog_id, $clone_id) {
 
 	/* Now add all post_meta to clone post */
 	switch_to_blog($cfgp_blog_id);
-	$results = cfgp_push_all_post_meta($all_post_meta, $clone_id);
+	$results = _cfgp_push_all_post_meta($all_post_meta, $clone_id);
 	
 	/* Add the original blog's id to the clone's post meta */
 	$results['_original_blog_id'] = update_post_meta($clone_id, '_original_blog_id', $original_blog_id);
