@@ -197,7 +197,7 @@ function cfgp_do_post_meta($post_id, $cfgp_blog_id, $clone_id) {
 	$results = _cfgp_push_all_post_meta($all_post_meta, $clone_id);
 	
 	/* Add the original blog's id to the clone's post meta */
-	$results['_original_blog_id'] = update_post_meta($clone_id, '_original_blog_id', $original_blog_id);
+	$results['_cfgp_original_blog_id'] = update_post_meta($clone_id, '_cfgp_original_blog_id', $original_blog_id);
 	
 	restore_current_blog();
 	
