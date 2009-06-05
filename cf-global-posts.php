@@ -429,7 +429,7 @@ function cfgp_operations_form() {
 	if (!cfgp_is_installed()) {
 		?>
 		<div class="wrap">
-			<h2><?php echo __('CF Global Posts Setup', ''); ?></h2>
+			<?php screen_icon(); ?><h2><?php echo __('CF Global Posts Setup', ''); ?></h2>
 			<p>Welcome to the Global Posts Operations page; click the button below to set up the 'Global Blog'</p>
 			<form method="post">
 				<input type="hidden" name="cf_action" value="cfgp_setup_shadow_blog" />
@@ -442,7 +442,7 @@ function cfgp_operations_form() {
 	if (!function_exists('cf_json_encode')) {
 		?>
 		<div class="wrap">
-			<h2><?php echo __('CF Global Posts Operations', ''); ?></h2>
+			<?php screen_icon(); ?><h2><?php echo __('CF Global Posts Operations', ''); ?></h2>
 			<p>This plugin requires functionality contained in the 'cf-compat' plugin.  This plugin must be activated before utilizing this page.</p>
 		</div>
 		<?php
@@ -450,7 +450,7 @@ function cfgp_operations_form() {
 	}
 	?>
 	<div class="wrap">
-		<h2><?php echo __('CF Global Posts Operations', ''); ?></h2>
+		<?php screen_icon(); ?><h2><?php echo __('CF Global Posts Operations', ''); ?></h2>
 		<script type="text/javascript">
 			jQuery(function($) {
 				import_box = $("#doing-import");
@@ -494,7 +494,13 @@ function cfgp_operations_form() {
 			<h2></h2>
 			<p id="import-ticks"></p>
 		</div>
-		<table>
+		<table class="widefat" style="width: 300px; margin: 20px 0">
+			<thead>
+				<tr>
+					<th scope="col">Blog</th>
+					<th scope="col" style="width: 30px;">Action</th>
+				</tr>
+			</thead>
 			<tbody>
 			<?php
 			global $wpdb;
@@ -507,6 +513,7 @@ function cfgp_operations_form() {
 					if ($blog->blog_id == $shadow_blog) { continue; }
 					echo '
 						<tr>
+							<th style="text-align: right; padding-top: 11px;">'.$blog->domain.'</th>
 							<td>
 								<form method="post" name="blog_import_'.attribute_escape($blog->blog_id).'" id="blog_import_'.attribute_escape($blog->blog_id).'">
 								<input type="hidden" name="blog_id" value="'.attribute_escape($blog->blog_id).'" />
@@ -514,7 +521,6 @@ function cfgp_operations_form() {
 								<button class="button-primary" id="start_import_blog_'.attribute_escape($blog->blog_id).'"/>Import</button>
 								</form>
 							</td>
-							<th style="text-align: right;">'.$blog->domain.'</th>
 						</tr>
 					';
 				}
