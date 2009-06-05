@@ -192,8 +192,9 @@ function cfgp_do_post_meta($post_id, $cfgp_blog_id, $clone_id) {
 	/* Assign original blog's id to a variable to be used in post_meta later */
 	$original_blog_id = $wpdb->blogid;
 
-	/* Now add all post_meta to clone post */
 	switch_to_blog($cfgp_blog_id);
+	
+	/* Now add all post_meta to clone post */
 	$results = _cfgp_push_all_post_meta($all_post_meta, $clone_id);
 	
 	/* Add the original blog's id to the clone's post meta */
