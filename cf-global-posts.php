@@ -370,6 +370,40 @@ function batch_import_blog($blog_id, $offset, $increment) {
 	);
 	return $results;
 }
+function cfgp_do_delete_post($cfgp_clone_id) {
+	/* remove the delete action, so not to infinite loop */
+	remove_action('delete_post', 'cfgp_delete_post_from_global');
+	
+	/* actually delete the clone post */
+	$delete_results = wp_delete_post($cfgp_clone_id);
+	
+	/* put action back */
+	add_action('delete_post', 'cfgp_delete_post_from_global');
+	
+	return $delete_results;
+}
+function cfgp_delete_post_from_global($post_id) {
+	/* grab shadow blog's post id */
+	$cfgp_clone_id = get_post_meta($post_id, '_cfgp_clone_id', true);
+	
+	/* grab right blog id */
+	$cfgp_blog_id = cfgp_get_shadow_blog_id();
+	
+	/* switch to blog */
+	switch_to_blog($cfgp_blog_id);
+	
+	/* do some wp_delete_post on that blog */
+	$delete_result = cfgp_do_delete_post($cfgp_clone_id);
+	
+	restore_current_blog();
+}
+add_action('delete_post', 'cfgp_delete_post_from_global');
+
+
+
+
+
+
 
 
 function cfgp_is_installed() {
