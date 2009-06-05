@@ -158,7 +158,8 @@ function cfgp_push_all_post_meta($all_post_meta, $clone_id) {
 		'_edit_last',
 		'_edit_lock',
 		'_encloseme',
-		'_pingme'
+		'_pingme',
+		'_cfgp_clone_id'
 	);
 	$excluded_values = apply_filters('cfgp_exluded_post_meta_values', $excluded_values);
 	foreach ($all_post_meta as $key => $value) {
