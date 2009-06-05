@@ -434,7 +434,7 @@ function cfgp_request_handler() {
 				
 			case 'add_blog_to_shadow_blog':
 				/* Set how many blog posts to do at once */
-				$increment = 2;
+				$increment = 25;
 				
 				/* Grab the ID of the blog we're pulling from */
 				$blog_id =  (int) $_POST['blog_id'];
