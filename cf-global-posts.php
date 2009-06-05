@@ -52,7 +52,6 @@ function cfgp_install() {
 		error_log('domain does exists');
 	}
 }
-register_activation_hook(CFGP_FILE, 'cfgp_install');
 
 
 
@@ -371,6 +370,13 @@ function batch_import_blog($blog_id, $offset, $increment) {
 }
 
 
+function cfgp_is_installed() {
+	$cfgp_blog_id = cfgp_get_shadow_blog_id();
+	if (empty($cfgp_blog_id)) {
+		return false;
+	}
+	return true;
+}
 function cfgp_request_handler() {
 	if (!empty($_GET['cf_action'])) {
 		switch ($_GET['cf_action']) {
@@ -396,9 +402,18 @@ function cfgp_request_handler() {
 				/* Grab our offset */
 				$offset = (int) $_POST['offset'];
 				
+				/* Admin page won't let somebody into this functionality,
+				* 	but in case someone hacks the url, don't try to do
+				* 	the import w/o the cf-compat plugin */
+				if (!function_exists('cf_json_encode')) { exit(); }
+				
 				echo cf_json_encode( batch_import_blog( $blog_id, $offset, $increment ) );
 				
 				exit();
+				break;
+			case 'cfgp_setup_shadow_blog':
+				cfgp_install();
+				/* We don't want to exit, b/c we want the page to refresh */
 				break;
 		}
 	}
@@ -410,6 +425,29 @@ wp_enqueue_script('jquery');
 
 
 function cfgp_operations_form() {
+	global $wpdb;
+	if (!cfgp_is_installed()) {
+		?>
+		<div class="wrap">
+			<h2><?php echo __('CF Global Posts Setup', ''); ?></h2>
+			<p>Welcome to the Global Posts Operations page; click the button below to set up the 'Global Blog'</p>
+			<form method="post">
+				<input type="hidden" name="cf_action" value="cfgp_setup_shadow_blog" />
+				<button type="submit">Setup Global Blog Now</button>
+			</form>
+		</div>
+		<?php
+		return;
+	}
+	if (!function_exists('cf_json_encode')) {
+		?>
+		<div class="wrap">
+			<h2><?php echo __('CF Global Posts Operations', ''); ?></h2>
+			<p>This plugin requires functionality contained in the 'cf-compat' plugin.  This plugin must be activated before utilizing this page.</p>
+		</div>
+		<?php
+		return;
+	}
 	?>
 	<div class="wrap">
 		<h2><?php echo __('CF Global Posts Operations', ''); ?></h2>
@@ -425,7 +463,7 @@ function cfgp_operations_form() {
 					blogId = $(this).siblings("input[name='blog_id']").val();
 					import_buttons.attr('disabled','disabled');
 					do_batch(blogId, 0);
-					import_box.show().removeClass('updated fade').children('h2').text('Doing an import, do not navigate away from this page...').siblings("#import-ticks").text('');
+					import_box.show().removeClass('updated fade').children('h2').text('Import in progress, do not navigate away from this page...').siblings("#import-ticks").text('');
 					return false;
 				});
 				function do_batch(blogId, offset_amount) {
