@@ -82,8 +82,7 @@ function cfgp_are_we_inserting($post_id) {
 	/* Grab the clone's id */
 	return get_post_meta($post_id, '_cfgp_clone_id', true);
 }
-function cfgp_do_the_post($cfgp_blog_id) {
-	global $post;
+function cfgp_do_the_post($post, $cfgp_blog_id) {
 	/* Check to see if we're inserting the post, or updating an existing */
 	$clone_post_id = cfgp_are_we_inserting($post->ID);
 
@@ -231,10 +230,10 @@ function cfgp_clone_post_on_publish($post_id, $post) {
 	* POST WORK *
 	************/
 	$old_post_id = $post->ID;
-	$clone_id = cfgp_do_the_post($cfgp_blog_id);
+	$clone_id = cfgp_do_the_post($post, $cfgp_blog_id);
 	$post->ID = $old_post_id;
 	
-	
+
 	/****************
 	* CATEGORY WORK *
 	****************/
@@ -307,7 +306,7 @@ function batch_import_blog($blog_id, $offset, $increment) {
 			the_post(); 
 			
 			$old_post_id = $post->ID;
-			$clone_id = cfgp_do_the_post($cfgp_blog_id);
+			$clone_id = cfgp_do_the_post($post, $cfgp_blog_id);
 			$post->ID = $old_post_id;
 	
 			
