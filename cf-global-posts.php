@@ -316,26 +316,30 @@ function batch_import_blog($blog_id, $offset, $increment) {
 		
 		// Gather the clone ids into this array
 		$clone_info = array();
+		$post = '';
 		
 		switch_to_blog($cfgp_blog_id);
 		foreach ($posts as $post) {
 			$clone_post_id = $post['clone_post_id'];
+			$the_post = $post['post'];
+			$categories = $post['categories'];
+			$tags = $post['tags'];
+			$post_meta = $post['post_meta'];
 			
 			/************
 			* POST WORK *
 			************/
 			$old_post_id = $post['post']->ID;
-			$clone_id = cfgp_do_the_post($post['post'],$clone_post_id);
-			$post['post']->ID = $old_post_id;
+			$clone_id = cfgp_do_the_post($the_post,$clone_post_id);
 
 
 			/****************
 			* CATEGORY WORK *
 			****************/
 			
-			if (is_array($post['categories'])) {
+			if (is_array($categories)) {
 				$cur_cat_names = array();
-				foreach ($post['categories'] as $cat) {
+				foreach ($categories as $cat) {
 					$cur_cats_names[] = $cat->name;
 				}
 				$cat_results = cfgp_do_categories($clone_id, $cur_cats_names);
@@ -345,8 +349,8 @@ function batch_import_blog($blog_id, $offset, $increment) {
 			* TAG WORK *
 			***********/
 
-			if (is_array($post['tags'])) {
-				foreach ($post['tags'] as $tag) {
+			if (is_array($tags)) {
+				foreach ($tags as $tag) {
 					$tag_names[] = $tag->name;
 				}
 				$tag_name_string = implode(', ', $tag_names);
@@ -356,16 +360,16 @@ function batch_import_blog($blog_id, $offset, $increment) {
 			/*****************
 			* POST META WORK *
 			*****************/
-			$post_meta_results = cfgp_do_post_meta($clone_id, $blog_id, $post['post_meta']);
+			$post_meta_results = cfgp_do_post_meta($clone_id, $blog_id, $post_meta);
 			
 			$clone_info[] = array(
-				'post_id' => $post['post']->ID,
+				'post_id' => $old_post_id,
 				'clone_id' => $clone_id
 			);
 			
 			/* Add the return values for this post */
 			$single_post_results[] = array(
-				'original_post' => $post['post']->ID,
+				'original_post' => $old_post_id,
 				'clone_id' => $clone_id,
 				'cat_results' => $cat_results, 
 				'tag_results' => $tag_results, 
@@ -456,6 +460,7 @@ function cfgp_request_handler() {
 				break;
 				
 			case 'add_blog_to_shadow_blog':
+				set_time_limit(0);
 				/* Set how many blog posts to do at once */
 				$increment = 5;
 				
@@ -593,7 +598,7 @@ function cfgp_admin_js() {
 	header('Content-type: text/javascript');
 	?>
 	jQuery(function($) {
-		var ajaxSpinner = '<div class="ajax-spinner"><img src="<?php echo trailingslashit($wpserver).str_replace(ABSPATH,'',dirname(__FILE__));?>/images/ajax-loader.gif" border="0" /> <span class="ajax-loading"><?php _e('Processing...','cf-global-posts'); ?></span></div>';
+		var ajaxSpinner = '<div class="ajax-spinner"><img src="images/loading.gif" style="margin: 0 6px 0 0; vertical-align: middle" /> <span class="ajax-loading"><?php _e('Processing...','cf-global-posts'); ?></span></div>';
 		var ajaxComplete = 'Complete!';
 		var originalBGColortr = jQuery("#blogrow-1");
 		var originalBGColor = originalBGColortr.children("td:first").css("backgroundColor");
