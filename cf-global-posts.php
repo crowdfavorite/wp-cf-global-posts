@@ -263,7 +263,7 @@ function cfgp_clone_post_on_publish($post_id, $post) {
 }
 add_action('save_post', 'cfgp_clone_post_on_publish', 10, 2);
 
-function batch_import_blog($blog_id, $offset, $increment) {
+function cfgp_batch_import_blog($blog_id, $offset, $increment) {
 	switch_to_blog($blog_id);
 	
 	// Get the shadow blog ID
@@ -473,7 +473,7 @@ function cfgp_request_handler() {
 				* 	the import w/o the cf-compat plugin */
 				if (!function_exists('cf_json_encode')) { exit(); }
 				
-				echo cf_json_encode( batch_import_blog( $blog_id, $offset, $increment ) );
+				echo cf_json_encode( cfgp_batch_import_blog( $blog_id, $offset, $increment ) );
 				
 				exit();
 				break;
