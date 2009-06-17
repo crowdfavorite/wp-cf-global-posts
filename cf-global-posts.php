@@ -8,6 +8,10 @@ Author: Crowd Favorite
 Author URI: http://crowdfavorite.com
 */
 
+/* Defining Shadow Blog's Site ID */
+define('CFGP_SITE_ID', 999999);
+
+
 // ini_set('display_errors', '1'); ini_set('error_reporting', E_ALL);
 
 if (!defined('PLUGINDIR')) {
@@ -27,21 +31,14 @@ load_plugin_textdomain('cf-global-posts');
 /*************************
 * Installation Functions *
 *************************/
-function cfgp_get_next_site_id() {
-	/* Grab the next open site id */
-	global $wpdb;
-	$row = $wpdb->get_row("SHOW TABLE STATUS LIKE '".$wpdb->site."' ");
-	return $row->Auto_increment;
-}
 function cfgp_install() {
 	/* Make domain a subdomain to example.com so there's 
 	* 	no possible way to navigate to it from admin or
 	* 	front-end */
 	$domain = 'cf-global-posts.example.com';
 	$path = '/';
-	$site = cfgp_get_next_site_id();
 	if (!domain_exists($domain, $path, $site)) {
-		$new_blog_id = create_empty_blog( $domain, $path, 'CF Global Posts Blog', $site );
+		$new_blog_id = create_empty_blog( $domain, $path, 'CF Global Posts Blog', CFGP_SITE_ID );
 
 		/* Store the shadow blog's id for future reference */
 		update_site_option('cfgp_blog_id', $new_blog_id);
@@ -69,12 +66,13 @@ function cfgp_add_post_save_actions() {
 	add_action('save_post', 'cfgp_clone_post_on_publish', 10, 2);
 }
 function cfgp_get_shadow_blog_id() {
-	do_action('cfgp_switch_to_site'); // If you're doing multiple sites, hook in here
+	/* We have to switch to the Shadow Blog's Site ID */
+	switch_to_site(CFGP_SITE_ID);
 
 	/* Get the shadow blog's id */
 	$cfgp_blog_id = get_site_option('cfgp_blog_id');
 
-	do_action('cfgp_restore_current_site'); // ...again, multiple sites, hook in here
+	restore_current_site(); 
 	
 	return $cfgp_blog_id;
 }
@@ -693,12 +691,128 @@ add_action('admin_menu', 'cfgp_admin_menu');
 
 
 
+/***********************************************
+* SWITCH TO SITE FUNCTIONS                     *
+* (brought from the "MU Multi-Site" plugin)    *
+* "MU Multi-Site" Plugin Credited Here:        *
+* 	author: David Dean                         *
+* 	http://www.jerseyconnect.net/              *
+***********************************************/
+
+if(!function_exists('switch_to_site')) {
+
+	/**
+	 * Problem: the various *_site_options() functions operate only on the current site
+	 * Workaround: change the current site
+	 * @param integer $new_site ID of site to manipulate
+	 */
+	function switch_to_site($new_site) {
+		global $tmpoldsitedetails, $wpdb, $site_id, $switched_site, $switched_site_stack, $current_site, $sites;
+
+		if ( !site_exists($new_site) )
+			$new_site = $site_id;
+
+		if ( empty($switched_site_stack) )
+			$switched_site_stack = array();
+
+		$switched_site_stack[] = $site_id;
+
+		if ( $new_site == $site_id )
+			return;
+
+		// backup
+		$tmpoldsitedetails[ 'site_id' ] 	= $site_id;
+		$tmpoldsitedetails[ 'id']			= $current_site->id;
+		$tmpoldsitedetails[ 'domain' ]		= $current_site->domain;
+		$tmpoldsitedetails[ 'path' ]		= $current_site->path;
+		$tmpoldsitedetails[ 'site_name' ]	= $current_site->site_name;
+
+		
+		foreach($sites as $site) {
+			if($site->id == $new_site) {
+				$current_site = $site;
+				break;
+			}
+		}
 
 
+		$wpdb->siteid			 = $new_site;
+		$current_site->site_name = get_site_option('site_name');
+		$site_id = $new_site;
 
+		do_action('switch_site', $site_id, $tmpoldsitedetails[ 'site_id' ]);
 
+		$switched_site = true;
+	}
+}
 
+if(!function_exists('restore_current_site')) {
 
+	/**
+	 * Return to the operational site after our operations
+	 */
+	function restore_current_site() {
+		global $tmpoldsitedetails, $wpdb, $site_id, $switched_site, $switched_site_stack;
+
+		if ( !$switched_site )
+			return;
+
+		$site_id = array_pop($switched_site_stack);
+
+		if ( $site_id == $current_site->id )
+			return;
+
+		// backup
+
+		$prev_site_id = $wpdb->site_id;
+
+		$wpdb->siteid = $site_id;
+		$current_site->id = $tmpoldsitedetails[ 'id' ];
+		$current_site->domain = $tmpoldsitedetails[ 'domain' ];
+		$current_site->path = $tmpoldsitedetails[ 'path' ];
+		$current_site->site_name = $tmpoldsitedetails[ 'site_name' ];
+
+		unset( $tmpoldsitedetails );
+
+		do_action('switch_site', $site_id, $prev_site_id);
+
+		$switched_site = false;
+		
+	}
+}
+if(!function_exists('site_exists')) {
+
+	/**
+	 * Check to see if a site exists. Will check the sites object before checking the database.
+	 * @param integer $site_id ID of site to verify
+	 * @return boolean TRUE if found, FALSE otherwise
+	 */
+	function site_exists($site_id) {
+		global $sites, $wpdb;
+		$site_id = (int)$site_id;
+		foreach($sites as $site) {
+			if($site_id == $site->id) {
+				return TRUE;
+			}
+		}
+		
+		/* check db just to be sure */
+		$site_list = $wpdb->get_results('SELECT id FROM ' . $wpdb->site);
+		if($site_list) {
+			foreach($site_list as $site) {
+				if($site->id == $site_id) {
+					return TRUE;
+				}
+			}
+		}
+		
+		return FALSE;
+	}
+}
+
+/****************************************************************
+* END SWITCH TO SITE FUNCTIONS used from "MU Multi-Site" Plugin *
+****************************************************************/
 
 
 
