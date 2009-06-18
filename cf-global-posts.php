@@ -428,7 +428,53 @@ add_action('delete_post', 'cfgp_delete_post_from_global');
 
 
 
+function cfgp_flush_blog_data_from_shadow($blog_id) {
+	global $wpdb;
+	
+	/* Grab all the clone id's for the related posts from 
+	* 	the incomming blog */
+	$sql = '
+		SELECT 
+			post_id AS original_id, 
+			meta_value AS clone_id
+		FROM 
+			wp_'.$blog_id.'_postmeta
+		WHERE
+			meta_key = "_cfgp_clone_id"
+	';
+	$post_clone_mashup = $wpdb->get_results($sql, 'ARRAY_A');
+	
+	/* Loop through all those clone id's and delete the 
+	* 	clone'd post with cfgp_do_delete_post function */
+	if (is_array($post_clone_mashup) && count($post_clone_mashup) > 0) {
+		$delete_result = array();
+		$cfgp_blog_id = cfgp_get_shadow_blog_id();		
+		switch_to_blog($cfgp_blog_id);
+		foreach ($post_clone_mashup as $row) {
+			$delete_result[$row['original_id']] = cfgp_do_delete_post($row['clone_id']);
+		}
+		restore_current_blog();
+	}
+	
+	
 
+	/* Erase all the post_meta records, relating to the 
+	* 	shadow blog, from the incomming blog */
+	$sql = '
+		DELETE FROM 
+			wp_'.$blog_id.'_postmeta
+		WHERE
+			meta_key = "_cfgp_clone_id"
+	';
+	$delete_postmeta_results = $wpdb->query($sql);
+	
+	if (count($delete_result) == $delete_postmeta_results) {
+		error_log('SUCCESS!'."\n".'They both removed the same '.$delete_postmeta_results.' records');
+	}
+	else {
+		error_log('FAIL'."\n".'posts_deleted: '.count($delete_result)."\n".'meta_deleted: '.$delete_postmeta_results);
+	}
+}
 
 
 
@@ -467,6 +513,12 @@ function cfgp_request_handler() {
 				
 				/* Grab our offset */
 				$offset = (int) $_POST['offset'];
+				
+				/* Check if we're doing the first batch, if so, flush the 
+				* 	incoming's blog data from shadow blog, so we can start fresh */
+				if ($offset == 0) {
+					cfgp_flush_blog_data_from_shadow($blog_id);
+				}
 				
 				/* Admin page won't let somebody into this functionality,
 				* 	but in case someone hacks the url, don't try to do
