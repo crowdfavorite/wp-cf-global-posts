@@ -745,6 +745,9 @@ function cfgp_operations_form() {
 						<tr>
 							<td colspan="3">
 								<input type="hidden" id="all_blog_ids" name="all_blog_ids" value="<?php echo implode(',',$blog_ids); ?>" />
+								<p>
+									<strong><?php _e('NOTE: Doing this operation during peak server loads may cause undesired effects!','cf-global-posts'); ?></strong>
+								</p>
 								<button class="button-primary" id="start_import_all_blogs"><?php _e('Import All','cf-global-posts'); ?></button>
 							</td>
 						</tr>
