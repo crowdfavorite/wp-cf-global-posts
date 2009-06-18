@@ -1,0 +1,4 @@
+# 1.1 - 2009-06-17:
+	- Changing shadow blog's site id to 999999, and setting as a constant
+	- Adding switch to site functions to bottom of plugin
+	- Made a change to the 'import' functionality, so that when a blog is imported, all posts/postmeta/term_relationships in shadow blog from the incomming blog are erased.  After the shadow blog's information relating to that blog is removed, then it removes the postmeta from the source blog's postmeta table which relates the post to the shadow blog post.  After all that, the import proceeds as normal.
