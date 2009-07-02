@@ -289,7 +289,7 @@ function _cfgp_push_all_post_meta($all_post_meta, $clone_id) {
 	}
 	return $results;
 }
-function cfgp_do_post_meta($clone_id, $original_blog_id, $all_post_meta) {
+function cfgp_do_post_meta($clone_id, $original_blog_id, $all_post_meta, $permalink) {
 	global $wpdb;
 	
 	/* Now add all post_meta to clone post */
@@ -297,6 +297,9 @@ function cfgp_do_post_meta($clone_id, $original_blog_id, $all_post_meta) {
 	
 	/* Add the original blog's id to the clone's post meta */
 	$results['_cfgp_original_blog_id'] = update_post_meta($clone_id, '_cfgp_original_blog_id', $original_blog_id);
+	
+	/* Add the original blog post's permalink for an easy way back */
+	$results['_cfgp_original_permalink'] = update_post_meta($clone_id, '_cfgp_original_permalink', $permalink);
 	
 	return $results;
 }
@@ -326,6 +329,9 @@ function cfgp_clone_post_on_publish($post_id, $post) {
 	
 	/* Get all the post_meta for current post */
 	$all_post_meta = get_post_custom($post->ID);
+	
+	/* Grab the Permalink of the post, so the shadow blog knows how to get back to the post */
+	$permalink = get_permalink($post->ID);
 
 	switch_to_blog($cfgp_blog_id);
 	
@@ -365,7 +371,7 @@ function cfgp_clone_post_on_publish($post_id, $post) {
 	/*****************
 	* POST META WORK *
 	*****************/
-	$post_meta_results = cfgp_do_post_meta($clone_id, $current_blog_id, $all_post_meta);
+	$post_meta_results = cfgp_do_post_meta($clone_id, $current_blog_id, $all_post_meta, $permalink);
 
 	restore_current_blog();
 
@@ -429,12 +435,16 @@ function cfgp_batch_import_blog($blog_id, $offset, $increment) {
 			/* Check to see if we're inserting the post, or updating an existing */
 			$clone_post_id = cfgp_are_we_inserting($post->ID);
 			
+			/* Grab the Permalink of the post, so the shadow blog knows how to get back to the post */
+			$permalink = get_permalink($post->ID);
+			
 			// Gather all of the info to be processed into one place
 			$posts[$post->ID]['post'] = $post;
 			$posts[$post->ID]['categories'] = $categories;
 			$posts[$post->ID]['tags'] = $tags;
 			$posts[$post->ID]['post_meta'] = $all_post_meta;
 			$posts[$post->ID]['clone_post_id'] = $clone_post_id;
+			$posts[$post->ID]['permalink'] = $permalink;
 		}
 		
 		// Gather the clone ids into this array
@@ -448,6 +458,7 @@ function cfgp_batch_import_blog($blog_id, $offset, $increment) {
 			$categories = $post['categories'];
 			$tags = $post['tags'];
 			$post_meta = $post['post_meta'];
+			$permalink = $post['permalink'];
 			
 			/************
 			* POST WORK *
@@ -483,7 +494,7 @@ function cfgp_batch_import_blog($blog_id, $offset, $increment) {
 			/*****************
 			* POST META WORK *
 			*****************/
-			$post_meta_results = cfgp_do_post_meta($clone_id, $blog_id, $post_meta);
+			$post_meta_results = cfgp_do_post_meta($clone_id, $blog_id, $post_meta, $permalink);
 			
 			$clone_info[] = array(
 				'post_id' => $old_post_id,
@@ -496,7 +507,8 @@ function cfgp_batch_import_blog($blog_id, $offset, $increment) {
 				'clone_id' => $clone_id,
 				'cat_results' => $cat_results, 
 				'tag_results' => $tag_results, 
-				'post_meta_results' => $post_meta_results
+				'post_meta_results' => $post_meta_results,
+				'permalink' => $permalink
 			);
 		}
 		restore_current_blog();
