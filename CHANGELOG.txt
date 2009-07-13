@@ -2,3 +2,13 @@
 	- Changing shadow blog's site id to 999999, and setting as a constant
 	- Adding switch to site functions to bottom of plugin
 	- Made a change to the 'import' functionality, so that when a blog is imported, all posts/postmeta/term_relationships in shadow blog from the incomming blog are erased.  After the shadow blog's information relating to that blog is removed, then it removes the postmeta from the source blog's postmeta table which relates the post to the shadow blog post.  After all that, the import proceeds as normal.
+	
+# 1.3 - 2009-07-13:
+	- Fixing bug when checking for site id of 999999
+	- define blog domain as constant
+	- For installed-check, utilize the get_blog_id_from_url function, and reference the blog domain's constant for the domain
+	- Remove the switch_to_site functions
+	- Added comment count to post meta of clone post
+		- Comment count is updated on import and comment add/delete
+	- Added 'reset entire shadow blog' button to admin screen.  (only shown to user 'crowdfavorite' by default, but is filterable)
+		- resent entire shadow blog is one bad function, so it's doubly-prompted and only shown to specific users.
