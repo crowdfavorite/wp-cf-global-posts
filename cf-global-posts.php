@@ -3,7 +3,7 @@
 Plugin Name: CF Global Posts 
 Plugin URI:  
 Description: Generates a 'shadow blog' where posts mu-install-wide are conglomorated into one posts table for data compilation and retrieval 
-Version: 1.2 
+Version: 1.3
 Author: Crowd Favorite
 Author URI: http://crowdfavorite.com
 */
