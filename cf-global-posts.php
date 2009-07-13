@@ -744,7 +744,7 @@ function cfgp_operations_form() {
 				</table>
 				<?php
 				/* Display Reset Global Post Button here */
-				$acceptable_big_admins = apply_filters('cfgp_big_admins', array('crowdfavorite','admin'));
+				$acceptable_big_admins = apply_filters('cfgp_big_admins', array('crowdfavorite'));
 				if (in_array($userdata->user_login, $acceptable_big_admins)) {
 
 					/* This button will:
