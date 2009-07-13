@@ -240,7 +240,7 @@ function cfgp_clone_post_on_publish($post_id, $post) {
 	* POST META WORK *
 	*****************/
 	$post_meta_results = cfgp_do_post_meta($clone_id, $current_blog_id, $all_post_meta, $permalink);
-
+	
 	restore_current_blog();
 
 	/* first add post_meta to the original 
@@ -267,25 +267,45 @@ if (cfgp_is_installed()) {
 * Comment Count Updating Function *
 **********************************/
 function cfgp_update_comment_count($post_id, $new_count, $old_count) {
-	/* Grab clone's post id from current post's meta data */
-	$clone_post_id = get_post_meta($post_id, '_cfgp_clone_id', true);
-	
-	if ($clone_post_id == '') { 
-		/* No clone for this post, don't try to update comment count */
-		return; 
-	}
-	
+	global $wpdb;
+		
 	/* get blog id for shadow blog */
 	$cfgp_blog_id = cfgp_get_shadow_blog_id();
 	
-	/* switch to shadow blog */
-	switch_to_blog($cfgp_blog_id);
+	/* If we're not already on the shadow blog, get clone's id from the 
+	* 	passed $post_id, and utilize the switch_to_blog functionality */
+	if ($wpdb->blogid != $cfgp_blog_id) {
+		/* Grab clone's post id from current post's meta data */
+		$clone_post_id = get_post_meta($post_id, '_cfgp_clone_id', true);
+
+		if ($clone_post_id == '') { 
+			/* No clone for this post, don't try to update comment count */
+			return; 
+		}
+		/* switch to shadow blog */
+		switch_to_blog($cfgp_blog_id);
+		$switched = true;
+	}
+	/* If we are on the shadow blog already, we're doing an import, and the 
+	* 	passed post_id is the clone's post id */
+	else {
+		$clone_post_id = $post_id;
+		$switched = false;
+	}
+		
+	if ($new_count === 0) {
+		/* delete post meta, so we don't have a ton of empty rows in the post meta table */
+		delete_post_meta($clone_post_id, '_cfgp_comment_count');
+	}
+	else {
+		/* update comment count meta data for cloned post */
+		update_post_meta($clone_post_id, '_cfgp_comment_count', $new_count);
+	}
 	
-	/* update comment count meta data for cloned post */
-	update_post_meta($clone_post_id, '_cfgp_comment_count', $new_count);
-	
-	/* restore current blog */
-	restore_current_blog();
+	if ($switched) {
+		/* restore current blog */
+		restore_current_blog();
+	}
 }
 if (cfgp_is_installed()) {
 	/* The action "update_comment_count" is called on new comment or comment deletion
@@ -341,6 +361,9 @@ function cfgp_batch_import_blog($blog_id, $offset, $increment) {
 			/* Grab the Permalink of the post, so the shadow blog knows how to get back to the post */
 			$permalink = get_permalink($post->ID);
 			
+			/* Grab the comment count, so we can insert it into clone's post meta */
+			$comment_count = get_comment_count($post->ID);
+			
 			// Gather all of the info to be processed into one place
 			$posts[$post->ID]['post'] = $post;
 			$posts[$post->ID]['categories'] = $categories;
@@ -348,6 +371,7 @@ function cfgp_batch_import_blog($blog_id, $offset, $increment) {
 			$posts[$post->ID]['post_meta'] = $all_post_meta;
 			$posts[$post->ID]['clone_post_id'] = $clone_post_id;
 			$posts[$post->ID]['permalink'] = $permalink;
+			$posts[$post->ID]['comment_count'] = $comment_count['approved'];
 		}
 		
 		// Gather the clone ids into this array
@@ -362,6 +386,7 @@ function cfgp_batch_import_blog($blog_id, $offset, $increment) {
 			$tags = $post['tags'];
 			$post_meta = $post['post_meta'];
 			$permalink = $post['permalink'];
+			$comment_number = $post['comment_count'];
 			
 			/************
 			* POST WORK *
@@ -404,6 +429,11 @@ function cfgp_batch_import_blog($blog_id, $offset, $increment) {
 				'clone_id' => $clone_id
 			);
 			
+			/*********************
+			* COMMENT COUNT WORK *
+			*********************/
+			$comment_update_results = cfgp_update_comment_count($clone_id, $comment_number, 0);
+			
 			/* Add the return values for this post */
 			$single_post_results[] = array(
 				'original_post' => $old_post_id,
@@ -411,7 +441,8 @@ function cfgp_batch_import_blog($blog_id, $offset, $increment) {
 				'cat_results' => $cat_results, 
 				'tag_results' => $tag_results, 
 				'post_meta_results' => $post_meta_results,
-				'permalink' => $permalink
+				'permalink' => $permalink,
+				'comment_count' => $comment_update_results
 			);
 		}
 		restore_current_blog();
