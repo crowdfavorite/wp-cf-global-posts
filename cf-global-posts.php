@@ -469,7 +469,19 @@ if (cfgp_is_installed()) {
 
 
 
-
+function cfgp_delete_cfgp_post_meta($blog_id) {
+	global $wpdb;
+	
+	/* Erase all the post_meta records, relating to the 
+	* 	shadow blog, from the incomming blog */
+	$sql = '
+		DELETE FROM 
+			wp_'.$blog_id.'_postmeta
+		WHERE
+			meta_key = "_cfgp_clone_id"
+	';
+ 	return $wpdb->query($sql);
+}
 function cfgp_flush_blog_data_from_shadow($blog_id) {
 	global $wpdb;
 	
@@ -498,17 +510,7 @@ function cfgp_flush_blog_data_from_shadow($blog_id) {
 		restore_current_blog();
 	}
 	
-	
-
-	/* Erase all the post_meta records, relating to the 
-	* 	shadow blog, from the incomming blog */
-	$sql = '
-		DELETE FROM 
-			wp_'.$blog_id.'_postmeta
-		WHERE
-			meta_key = "_cfgp_clone_id"
-	';
-	$delete_postmeta_results = $wpdb->query($sql);
+	$delete_postmeta_results = cfgp_delete_cfgp_post_meta($blog_id);
 	
 	if (count($delete_result) == $delete_postmeta_results) {
 		error_log('SUCCESS!'."\n".'They both removed the same '.$delete_postmeta_results.' records');
@@ -584,7 +586,7 @@ wp_enqueue_script('jquery');
 
 
 function cfgp_operations_form() {
-	global $wpdb;
+	global $wpdb, $userdata;
 	?>
 	<style type="text/css">
 		.cfgp_status {
@@ -677,6 +679,14 @@ function cfgp_operations_form() {
 				</table>
 			<?php
 			}
+		}
+		if ($userdata->user_login == 'crowdfavorite') {
+			/* Display Reset Global Post Button here */
+
+			/* This button will:
+			* 		1) delete the shadow blog
+			* 		2) remove all post_meta keys ('_cfgp_clone_id')
+			*/
 		}
 		?>
 	</div><!--/wrap-->
