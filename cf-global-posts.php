@@ -520,13 +520,44 @@ function cfgp_flush_blog_data_from_shadow($blog_id) {
 	}
 }
 
-
 /* Returns False if it's not there, otherwise returns blog id */
 function cfgp_is_installed() {
 	if (!cfgp_get_shadow_blog_id()) {
 		return false;
 	}
 	return true;
+}
+function cfgp_reset_shadow_blog() {
+	$results = array();
+	
+	/* Get list of all blogs */
+	$blog_list = get_blog_list(0, 'all');
+	
+	/* Delete all post_meta in all blogs */
+	foreach ($blog_list as $blog_info) {
+		cfgp_delete_cfgp_post_meta($blog_info['blog_id']);
+	}
+	$results['meta_deleted'] = true;
+	
+	/* Delete the sitemeta, if this is a legacy install of plugin */
+	global $wpdb;
+	$sql = '
+		DELETE FROM 
+			wp_sitemeta
+		WHERE
+			meta_key = "cfgp_blog_id"
+	';
+ 	$results['sitemeta_deleted'] = $wpdb->query($sql);
+	
+	/* Delete the shadow blog */
+	if (!function_exists('wpmu_delete_blog')) {
+		require_once(ABSPATH.'wp-admin/includes/mu.php');
+	}
+	wpmu_delete_blog(cfgp_get_shadow_blog_id(), true);
+	
+	$results['success'] = 'true';
+	
+	return $results;
 }
 function cfgp_request_handler() {
 	if (!empty($_GET['cf_action'])) {
@@ -576,6 +607,9 @@ function cfgp_request_handler() {
 				cfgp_install();
 				/* We don't want to exit, b/c we want the page to refresh */
 				break;
+			case 'reset_entire_shadow_blog':
+				echo cf_json_encode(cfgp_reset_shadow_blog());
+				exit;
 		}
 	}
 }
@@ -677,16 +711,52 @@ function cfgp_operations_form() {
 					?>
 					</tbody>
 				</table>
-			<?php
-			}
-		}
-		if ($userdata->user_login == 'crowdfavorite') {
-			/* Display Reset Global Post Button here */
+				<?php
+				/* Display Reset Global Post Button here */
+				if (in_array($userdata->user_login, array('crowdfavorite','admin'))) {
 
-			/* This button will:
-			* 		1) delete the shadow blog
-			* 		2) remove all post_meta keys ('_cfgp_clone_id')
-			*/
+					/* This button will:
+					* 		1) delete the shadow blog
+					* 		2) remove all post_meta keys ('_cfgp_clone_id')
+					*/
+					?>
+					<script type="text/javascript">
+						jQuery(function($){
+							$("#reset_shadow_blog_button").click(function(){
+								var confirmation = confirm("Are you sure that you want to reset the entire shadow blog?? \n\nExisting blogs will NOT be automatically added back in.  You will need to use the form above");
+								if (confirmation) {
+									if(confirm("Resetting Shadow Blog now...")){
+									$.post(
+										'index.php',
+										{
+											cf_action: "reset_entire_shadow_blog"
+										},
+										function(r){
+											if (r.success == "true") {
+												alert("Shadow blog successfully reset!  Refreshing page now...");
+												document.location = document.location;
+											}
+											else {
+												alert("something went wrong, Please try again");
+											}
+										},
+										'json'
+									);
+									}
+									else {
+										alert("Reset of Shadow Blog Cancelled");
+									}
+								}
+								else {
+									alert("Reset of Shadow Blog Cancelled");
+								}
+							});
+						});
+					</script>
+					<button class="button-primary" id="reset_shadow_blog_button" name="reset_shadow_blog_button">Reset Entire Shadow Blog</button>
+					<?php
+				}
+			}
 		}
 		?>
 	</div><!--/wrap-->
