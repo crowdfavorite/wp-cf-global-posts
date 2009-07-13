@@ -3,7 +3,7 @@
 Plugin Name: CF Global Posts 
 Plugin URI:  
 Description: Generates a 'shadow blog' where posts mu-install-wide are conglomorated into one posts table for data compilation and retrieval 
-Version: 1.1 
+Version: 1.2 
 Author: Crowd Favorite
 Author URI: http://crowdfavorite.com
 */
@@ -262,6 +262,41 @@ if (cfgp_is_installed()) {
 	add_action('save_post', 'cfgp_clone_post_on_publish', 10, 2);
 }
 
+
+/**********************************
+* Comment Count Updating Function *
+**********************************/
+function cfgp_update_comment_count($post_id, $new_count, $old_count) {
+	/* Grab clone's post id from current post's meta data */
+	$clone_post_id = get_post_meta($post_id, '_cfgp_clone_id', true);
+	
+	if ($clone_post_id == '') { 
+		/* No clone for this post, don't try to update comment count */
+		return; 
+	}
+	
+	/* get blog id for shadow blog */
+	$cfgp_blog_id = cfgp_get_shadow_blog_id();
+	
+	/* switch to shadow blog */
+	switch_to_blog($cfgp_blog_id);
+	
+	/* update comment count meta data for cloned post */
+	update_post_meta($clone_post_id, '_cfgp_comment_count', $new_count);
+	
+	/* restore current blog */
+	restore_current_blog();
+}
+if (cfgp_is_installed()) {
+	/* The action "update_comment_count" is called on new comment or comment deletion
+	* 	so we only need one action to track comment counts */
+	add_action('wp_update_comment_count', 'cfgp_update_comment_count', 10, 3);
+}
+
+
+/***************************
+* Importing blog functions *
+***************************/
 function cfgp_batch_import_blog($blog_id, $offset, $increment) {
 	switch_to_blog($blog_id);
 	
@@ -428,7 +463,9 @@ function cfgp_delete_post_from_global($post_id) {
 	
 	restore_current_blog();
 }
-add_action('delete_post', 'cfgp_delete_post_from_global');
+if (cfgp_is_installed()) {
+	add_action('delete_post', 'cfgp_delete_post_from_global');
+}
 
 
 
