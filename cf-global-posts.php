@@ -3,7 +3,7 @@
 Plugin Name: CF Global Posts 
 Plugin URI:  
 Description: Generates a 'shadow blog' where posts mu-install-wide are conglomorated into one posts table for data compilation and retrieval 
-Version: 1.3
+Version: 1.4
 Author: Crowd Favorite
 Author URI: http://crowdfavorite.com
 */
@@ -172,8 +172,6 @@ function cfgp_do_post_meta($clone_id, $original_blog_id, $all_post_meta, $permal
 	return $results;
 }
 
-
-
 /***************************
 * Functions called from WP *
 ***************************/
@@ -233,7 +231,14 @@ function cfgp_clone_post_on_publish($post_id, $post) {
 	/***********
 	* TAG WORK *
 	***********/
-	$tags = $_POST['tags_input'];
+	/* tags changed in 2.8, so we need to see if we're >= 2.8 */
+	global $wp_version;
+	if (version_compare($wp_version, '2.8', '>=')) {
+		$tags = $_POST['tax_input']['post_tag'];
+	}
+	else {
+		$tags = $_POST['tags_input'];
+	}
 	$tag_results = cfgp_do_tags($clone_id, $tags);
 
 	/*****************

@@ -12,3 +12,6 @@
 		- Comment count is updated on import and comment add/delete
 	- Added 'reset entire shadow blog' button to admin screen.  (only shown to user 'crowdfavorite' by default, but is filterable)
 		- resent entire shadow blog is one bad function, so it's doubly-prompted and only shown to specific users.
+		
+# 1.4 - 2009-07-16:
+	- Fixing tag saving on post saving.  WP 2.8 changed the way tags were saved (in the $_POST variable), so added a version_compare function to get the appropriate $_POST var to push to tags.
