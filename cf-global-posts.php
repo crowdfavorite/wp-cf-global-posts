@@ -47,8 +47,39 @@ function cfgp_install() {
 	}
 }
 
-
-
+/***************************************
+* Post Information Retrieval Functions *
+***************************************/
+/* Return the original permalink of the clone'd post */
+function cfgp_get_permalink($post_id = false) {
+	if (!$post_id) {
+		global $post;
+		$post_id = $post->ID;
+	}
+	return get_post_meta($post_id, '_cfgp_original_permalink', true);
+}
+function cfgp_the_permalink($post_id = false) {
+	echo cfgp_get_permalink($post_id);
+}
+function cfgp_get_bloginfo($info = '', $post_id = false) {
+	/* Figure out the post ID */
+	if (!$post_id) {
+		global $post;
+		$post_id = $post->ID;
+	}
+	
+	/* Get the original blog's id */
+	$blog_id = get_post_meta($post_id, '_cfgp_original_blog_id', true);
+	
+	/* Go to the blog and get the info */
+	switch_to_blog($blog_id);
+	$blog_info = get_bloginfo($info);
+	restore_current_blog();
+	return $blog_info;
+}
+function cfgp_bloginfo($info = '', $post_id = false) {
+	echo cfgp_get_bloginfo($info, $post_id);
+}
 
 /**************************
 * Post Updating Functions *

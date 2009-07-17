@@ -15,3 +15,7 @@
 		
 # 1.4 - 2009-07-16:
 	- Fixing tag saving on post saving.  WP 2.8 changed the way tags were saved (in the $_POST variable), so added a version_compare function to get the appropriate $_POST var to push to tags.
+
+# 1.5 - (trunk right now)
+	- Adding post information functions for easy retrieval of permalink
+	- Adding cfgp_bloginfo() functions for easy retrieval of blog information (from originating blog)
