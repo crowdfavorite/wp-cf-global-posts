@@ -80,6 +80,45 @@ function cfgp_get_bloginfo($info = '', $post_id = false) {
 function cfgp_bloginfo($info = '', $post_id = false) {
 	echo cfgp_get_bloginfo($info, $post_id);
 }
+function cfgp_the_author_posts_link() {
+	global $post;
+	$post_id = $post->ID;
+	
+	/* Get the original blog's id */
+	$blog_id = get_post_meta($post_id, '_cfgp_original_blog_id', true);
+	
+	/* Go to the blog and get the info */
+	switch_to_blog($blog_id);
+	the_author_posts_link();
+	restore_current_blog();
+}
+function cfgp_comments_popup_link($zero = false, $one = false, $more = false, $css_class = '', $none = false) {
+	global $post;
+	$post_id = $post->ID;
+	
+	/* Get the original blog's id */
+	$blog_id = get_post_meta($post_id, '_cfgp_original_blog_id', true);
+	
+	/* Go to the blog and get the info */
+	switch_to_blog($blog_id);
+	comments_popup_link($zero, $one, $more, $css_class, $none);
+	restore_current_blog();
+}
+function cfgp_edit_post_link($link = 'Edit This', $before = '', $after = '', $id = 0) {
+	global $post;
+	$post_id = $post->ID;
+	
+	/* Get the original blog's id */
+	$blog_id = get_post_meta($post_id, '_cfgp_original_blog_id', true);
+	
+	/* Get the original post's id */
+	$original_post_id = get_post_meta($post_id, '_cfgp_original_post_id', true);
+	
+	/* Go to the blog and get the info */
+	switch_to_blog($blog_id);
+	edit_post_link($link, $before, $after, $original_post_id);
+	restore_current_blog();
+}
 
 /**************************
 * Post Updating Functions *
@@ -188,7 +227,7 @@ function _cfgp_push_all_post_meta($all_post_meta, $clone_id) {
 	}
 	return $results;
 }
-function cfgp_do_post_meta($clone_id, $original_blog_id, $all_post_meta, $permalink) {
+function cfgp_do_post_meta($clone_id, $original_blog_id, $all_post_meta, $permalink, $original_post_id) {
 	global $wpdb;
 	
 	/* Now add all post_meta to clone post */
@@ -200,6 +239,8 @@ function cfgp_do_post_meta($clone_id, $original_blog_id, $all_post_meta, $permal
 	/* Add the original blog post's permalink for an easy way back */
 	$results['_cfgp_original_permalink'] = update_post_meta($clone_id, '_cfgp_original_permalink', $permalink);
 	
+	/* Add the original blog posts's id for an easy way to reference that */
+	$results['_cfgp_original_post_id'] = update_post_meta($clone_id, '_cfgp_original_post_id', $original_post_id);
 	return $results;
 }
 
@@ -275,7 +316,7 @@ function cfgp_clone_post_on_publish($post_id, $post) {
 	/*****************
 	* POST META WORK *
 	*****************/
-	$post_meta_results = cfgp_do_post_meta($clone_id, $current_blog_id, $all_post_meta, $permalink);
+	$post_meta_results = cfgp_do_post_meta($clone_id, $current_blog_id, $all_post_meta, $permalink, $old_post_id);
 	
 	restore_current_blog();
 
@@ -458,7 +499,7 @@ function cfgp_batch_import_blog($blog_id, $offset, $increment) {
 			/*****************
 			* POST META WORK *
 			*****************/
-			$post_meta_results = cfgp_do_post_meta($clone_id, $blog_id, $post_meta, $permalink);
+			$post_meta_results = cfgp_do_post_meta($clone_id, $blog_id, $post_meta, $permalink, $old_post_id);
 			
 			$clone_info[] = array(
 				'post_id' => $old_post_id,
