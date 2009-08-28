@@ -126,16 +126,11 @@ function cfgp_edit_post_link($link = 'Edit This', $before = '', $after = '', $id
 function cfgp_remove_post_save_actions() {
 	remove_action('publish_post', '_publish_post_hook', 5, 1); // This *does* require the '5', '1' parameters
 
-	global $wp_filter,$cf_wp_filter;
-	
-	$cf_wp_filter = $wp_filter;
+	global $wp_filter;
 	$wp_filter = array();
 }
 function cfgp_add_post_save_actions() {
 	add_action('publish_post', '_publish_post_hook', 5, 1);
-
-	global $wp_filter,$cf_wp_filter;
-	$wp_filter = $cf_wp_filter;
 }
 
 function cfgp_get_shadow_blog_id() {
@@ -343,7 +338,8 @@ function cfgp_clone_post_on_publish($post_id, $post) {
 	);
 }
 if (cfgp_is_installed()) {
-	add_action('save_post', 'cfgp_clone_post_on_publish', 99999999, 2);
+	// Yes 999999999999999, we want this to run absolutily last.
+	add_action('save_post', 'cfgp_clone_post_on_publish', 999999999999999, 2);
 }
 
 
