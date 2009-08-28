@@ -338,8 +338,8 @@ function cfgp_clone_post_on_publish($post_id, $post) {
 	);
 }
 if (cfgp_is_installed()) {
-	// Yes 999999999999999, we want this to run absolutily last.
-	add_action('save_post', 'cfgp_clone_post_on_publish', 999999999999999, 2);
+	// Yes 999999999, we want this to run absolutily last. NOTE:  This is the largest number available as a priority
+	add_action('save_post', 'cfgp_clone_post_on_publish', 999999999, 2);
 }
 
 
