@@ -52,17 +52,17 @@ function cfgp_install() {
 * Post Information Retrieval Functions *
 ***************************************/
 /* Return the original permalink of the clone'd post */
-function cfgp_get_permalink($post_id = false) {
+function cfgp_get_permalink($post_id = null) {
 	if (!$post_id) {
 		global $post;
 		$post_id = $post->ID;
 	}
 	return get_post_meta($post_id, '_cfgp_original_permalink', true);
 }
-function cfgp_the_permalink($post_id = false) {
+function cfgp_the_permalink($post_id = null) {
 	echo cfgp_get_permalink($post_id);
 }
-function cfgp_get_bloginfo($info = '', $post_id = false) {
+function cfgp_get_bloginfo($info = '', $post_id = null) {
 	/* Figure out the post ID */
 	if (!$post_id) {
 		global $post;
@@ -78,7 +78,7 @@ function cfgp_get_bloginfo($info = '', $post_id = false) {
 	restore_current_blog();
 	return $blog_info;
 }
-function cfgp_bloginfo($info = '', $post_id = false) {
+function cfgp_bloginfo($info = '', $post_id = null) {
 	echo cfgp_get_bloginfo($info, $post_id);
 }
 function cfgp_the_author_posts_link() {
