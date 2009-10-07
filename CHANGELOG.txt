@@ -26,3 +26,5 @@
 		- cfgp_the_author_posts_link();
 		- cfgp_comments_popup_link();
 		- cfgp_edit_post_link();
+	- defining the import increment
+	- upping increment to 50, instead of 5
