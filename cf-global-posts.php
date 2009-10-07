@@ -1,9 +1,9 @@
 <?php
 /*
 Plugin Name: CF Global Posts 
-Plugin URI:  http://crowdfavorite.com
+Plugin URI:  
 Description: Generates a 'shadow blog' where posts mu-install-wide are conglomorated into one posts table for data compilation and retrieval 
-Version: 1.5(trunk)
+Version: 1.4
 Author: Crowd Favorite
 Author URI: http://crowdfavorite.com
 */
@@ -11,7 +11,6 @@ Author URI: http://crowdfavorite.com
 /* Defining Shadow Blog's Site ID */
 define('CFGP_SITE_ID', 999999);
 define('CFGP_SITE_DOMAIN', 'cf-global-posts.example.com');
-define('CFGP_SITE_IMPORT_INCREMENT', 50);
 
 // ini_set('display_errors', '1'); ini_set('error_reporting', E_ALL);
 
@@ -616,10 +615,8 @@ function cfgp_request_handler() {
 				
 			case 'add_blog_to_shadow_blog':
 				set_time_limit(0);
-				ini_set('display_errors', 0);
-				
 				/* Set how many blog posts to do at once */
-				$increment = CFGP_SITE_IMPORT_INCREMENT;
+				$increment = 5;
 				
 				/* Grab the ID of the blog we're pulling from */
 				$blog_id =  (int) $_POST['blog_id'];
