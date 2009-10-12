@@ -138,11 +138,18 @@ function cfgp_add_post_save_actions() {
        global $wp_filter,$cf_wp_filter;
        $wp_filter = $cf_wp_filter;
 }
+/**
+ * cfgp_get_shadow_blog_id
+ *
+ * "get_blog_id_from_url" function may return a zero, so we want to force a bool false if that's the case.  Otherwise return the blog id.
+ *
+ * @return bool/int
+ */
 function cfgp_get_shadow_blog_id() {
 	/* Utilize the domain to get the blog id */
 	$cfgp_blog_id = get_blog_id_from_url(CFGP_SITE_DOMAIN);
-
-	return $cfgp_blog_id;
+	
+	return ($cfgp_blog_id === 0) ? false : $cfgp_blog_id;
 }
 function cfgp_are_we_inserting($post_id) {
 	/* Grab the clone's id */
