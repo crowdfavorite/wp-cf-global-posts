@@ -28,3 +28,4 @@
 		- cfgp_edit_post_link();
 	- defining the import increment
 	- upping increment to 50, instead of 5
+	- changing the installed check to only return bool values.  That way we're sure that the installed check is returning as expected (instead of a possible zero value).
