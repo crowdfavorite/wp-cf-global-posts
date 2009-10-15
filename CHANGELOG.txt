@@ -16,7 +16,7 @@
 # 1.4 - 2009-07-16:
 	- Fixing tag saving on post saving.  WP 2.8 changed the way tags were saved (in the $_POST variable), so added a version_compare function to get the appropriate $_POST var to push to tags.
 
-# 1.5 - (trunk right now)
+# 1.5 - 2009-10-13:
 	- Adding post information functions for easy retrieval of post's information while in the loop
 		- cfgp_bloginfo();
 		- cfgp_get_permalink();
@@ -29,3 +29,7 @@
 	- defining the import increment
 	- upping increment to 50, instead of 5
 	- changing the installed check to only return bool values.  That way we're sure that the installed check is returning as expected (instead of a possible zero value).
+	
+# 1.6 - (trunk right now):
+	- Adding convenience wrapper function for deleting a blog from the shadow blog
+		- cfgp_delete_blog_from_shadow_blog();
