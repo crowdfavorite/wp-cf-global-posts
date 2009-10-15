@@ -3,7 +3,7 @@
 Plugin Name: CF Global Posts 
 Plugin URI: http://crowdfavorite.com
 Description: Generates a 'shadow blog' where posts mu-install-wide are conglomorated into one posts table for data compilation and retrieval 
-Version: 1.5(trunk)
+Version: 1.6(trunk)
 Author: Crowd Favorite
 Author URI: http://crowdfavorite.com
 */
@@ -604,6 +604,28 @@ function cfgp_delete_cfgp_post_meta($blog_id) {
 	';
  	return $wpdb->query($sql);
 }
+
+/**
+ * cfgp_delete_blog_from_shadow_blog
+ *
+ * Convenience Wrapper for deleting a blog from shadow blog 
+ *
+ * @param int $blog_id 
+ * @return void
+ */
+function cfgp_delete_blog_from_shadow_blog($blog_id) {
+	cfgp_flush_blog_data_from_shadow($blog_id);
+}
+
+/**
+ * cfgp_flush_blog_data_from_shadow
+ *
+ * Deletes all references (posts, post-meta, etc...) to specified blog
+ * in the shadow blog.
+ *
+ * @param int $blog_id 
+ * @return void
+ */
 function cfgp_flush_blog_data_from_shadow($blog_id) {
 	global $wpdb;
 	
