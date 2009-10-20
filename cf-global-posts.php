@@ -11,7 +11,7 @@ Author URI: http://crowdfavorite.com
 /* Defining Shadow Blog's Site ID */
 define('CFGP_SITE_ID', 999999);
 define('CFGP_SITE_DOMAIN', 'cf-global-posts.example.com');
-define('CFGP_SITE_IMPORT_INCREMENT', 50);
+define('CFGP_SITE_IMPORT_INCREMENT', 10);
 
 // ini_set('display_errors', '1'); ini_set('error_reporting', E_ALL);
 
