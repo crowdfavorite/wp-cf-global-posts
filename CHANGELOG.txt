@@ -33,3 +33,4 @@
 # 1.6 - (trunk right now):
 	- Adding convenience wrapper function for deleting a blog from the shadow blog
 		- cfgp_delete_blog_from_shadow_blog();
+	- dropped increment to 10 instead of 50
