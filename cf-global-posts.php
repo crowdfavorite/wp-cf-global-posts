@@ -2,16 +2,16 @@
 /*
 Plugin Name: CF Global Posts 
 Plugin URI: http://crowdfavorite.com
-Description: Generates a 'shadow blog' where posts mu-install-wide are conglomorated into one posts table for data compilation and retrieval 
+Description: Generates a 'shadow blog' where posts mu-install-wide are conglomorated into one posts table for fast data compilation and retrieval.
 Version: 1.6(trunk)
 Author: Crowd Favorite
 Author URI: http://crowdfavorite.com
 */
 
 /* Defining Shadow Blog's Site ID */
-define('CFGP_SITE_ID', 999999);
-define('CFGP_SITE_DOMAIN', 'cf-global-posts.example.com');
-define('CFGP_SITE_IMPORT_INCREMENT', 10);
+define('CFGP_SITE_ID', apply_filters('cfgp_define_site_id', 999999));
+define('CFGP_SITE_DOMAIN', apply_filters('cfgp_define_domain_name', 'cf-global-posts.example.com'));
+define('CFGP_SITE_IMPORT_INCREMENT', apply_filters('cfgp_define_import_increment', 10));
 
 // ini_set('display_errors', '1'); ini_set('error_reporting', E_ALL);
 
@@ -44,7 +44,7 @@ function cfgp_install() {
 		update_blog_status( $new_blog_id, 'public', 0 );
 	}
 	else {
-		error_log('domain does exists');
+		error_log('Domain Already Exists');
 	}
 }
 
@@ -125,18 +125,20 @@ function cfgp_edit_post_link($link = 'Edit This', $before = '', $after = '', $id
 * Post Updating Functions *
 **************************/
 function cfgp_remove_post_save_actions() {
-       remove_action('publish_post', '_publish_post_hook', 5, 1); // This *does* require the '5', '1' parameters
+		remove_action('publish_post', '_publish_post_hook', 5, 1); // This *does* require the '5', '1' parameters
+		remove_action('save_post', 'cfgp_clone_post_on_publish', 99999999, 2);
 
-       global $wp_filter,$cf_wp_filter;
-       
-       $cf_wp_filter = $wp_filter;
-       $wp_filter = array();
+		global $wp_filter,$cf_wp_filter;
+
+		$cf_wp_filter = $wp_filter;
+		$wp_filter = array();
 }
 function cfgp_add_post_save_actions() {
-       add_action('publish_post', '_publish_post_hook', 5, 1);
+		add_action('publish_post', '_publish_post_hook', 5, 1);
+		add_action('save_post', 'cfgp_clone_post_on_publish', 99999999, 2);
 
-       global $wp_filter,$cf_wp_filter;
-       $wp_filter = $cf_wp_filter;
+		global $wp_filter,$cf_wp_filter;
+		$wp_filter = $cf_wp_filter;
 }
 /**
  * cfgp_get_shadow_blog_id
@@ -156,7 +158,9 @@ function cfgp_are_we_inserting($post_id) {
 	return get_post_meta($post_id, '_cfgp_clone_id', true);
 }
 function cfgp_do_the_post($post, $clone_post_id) {
+	/* Remove actions, so we don't have an infinite loop */
 	cfgp_remove_post_save_actions();
+	
 	if ($clone_post_id == '') {
 		/* INSERTING NEW */
 		/* This post has not yet been cloned,
@@ -164,7 +168,6 @@ function cfgp_do_the_post($post, $clone_post_id) {
 	
 		/* remove the original post_id so we can create the clone */
 		unset($post->ID);
-
 		$clone_id = wp_insert_post($post);
 	}
 	else {
@@ -174,7 +177,10 @@ function cfgp_do_the_post($post, $clone_post_id) {
 		$post->ID = $clone_post_id;
 		$clone_id = wp_update_post($post);
 	}
+	
+	/* Add our save actions back in */
 	cfgp_add_post_save_actions();
+	
 	return $clone_id; 
 }
 function cfgp_do_categories($clone_id, $cur_cats_names) {
@@ -293,7 +299,6 @@ function cfgp_clone_post_on_publish($post_id, $post) {
 	$old_post_id = $post->ID;
 	$clone_id = cfgp_do_the_post($post,$clone_post_id);
 	$post->ID = $old_post_id;
-	
 
 	/****************
 	* CATEGORY WORK *
@@ -311,8 +316,9 @@ function cfgp_clone_post_on_publish($post_id, $post) {
 	foreach ($cur_cats as $cat) {
 		$cur_cats_names[] = get_catname( $cat );	
 	}
+	
+	/* Add categories to clone post */
 	$cat_results = cfgp_do_categories($clone_id, $cur_cats_names);
-
 
 	/***********
 	* TAG WORK *
@@ -325,16 +331,18 @@ function cfgp_clone_post_on_publish($post_id, $post) {
 	else {
 		$tags = $_POST['tags_input'];
 	}
+	/* Add tags to clone post */
 	$tag_results = cfgp_do_tags($clone_id, $tags);
 
 	/*****************
 	* POST META WORK *
 	*****************/
+	/* Add original post's postmeta to clone post */
 	$post_meta_results = cfgp_do_post_meta($clone_id, $current_blog_id, $all_post_meta, $permalink, $old_post_id);
-	
+
 	restore_current_blog();
 
-	/* first add post_meta to the original 
+	/* Add post_meta to the original 
 	* 	post of the clone's post id */
 	update_post_meta($post->ID, '_cfgp_clone_id', $clone_id);
 
@@ -722,6 +730,7 @@ function cfgp_request_handler() {
 				break;
 				
 			case 'add_blog_to_shadow_blog':
+				/* Don't have php timeout on us */
 				set_time_limit(0);
 				
 				/* We don't want error displaying corrupting the json */
@@ -1039,20 +1048,6 @@ add_action('admin_menu', 'cfgp_admin_menu');
 * this finalize a little more, we'll leave them in until we know we *
 * don't need them.                                                  *
 * ******************************************************************/
-
-
-
-function cfgp_init() {
-// TODO
-}
-add_action('init', 'cfgp_init');
-
-
-
-
-
-
-
 function cfgp_save_comment($comment_id) {
 // TODO
 }
@@ -1131,8 +1126,8 @@ function cfgp_plugin_action_links($links, $file) {
 }
 add_filter('plugin_action_links', 'cfgp_plugin_action_links', 10, 2);
 
-if (!function_exists('cf_settings_field')) {
-	function cf_settings_field($key, $config) {
+if (!function_exists('cfgp_settings_field')) {
+	function cfgp_settings_field($key, $config) {
 		$option = get_option($key);
 		if (empty($option) && !empty($config['default'])) {
 			$option = $config['default'];
@@ -1181,7 +1176,7 @@ function cfgp_settings_form() {
 		<fieldset class="options">
 	');
 	foreach ($cfgp_settings as $key => $config) {
-		echo cf_settings_field($key, $config);
+		echo cfgp_settings_field($key, $config);
 	}
 	print('
 		</fieldset>
@@ -1219,7 +1214,4 @@ function cfgp_save_settings() {
 		update_option($key, $value);
 	}
 }
-
-//a:21:{s:11:"plugin_name";s:15:"CF Global Posts";s:10:"plugin_uri";N;s:18:"plugin_description";s:132:"Generates a 'shadow blog' where posts mu-install-wide are conglomorated into one posts table for each data compilation and retrieval";s:14:"plugin_version";s:3:"0.1";s:6:"prefix";s:4:"cfgp";s:12:"localization";N;s:14:"settings_title";s:24:"CF Global Posts Settings";s:13:"settings_link";s:15:"CF Global Posts";s:4:"init";s:1:"1";s:7:"install";s:1:"1";s:9:"post_edit";s:1:"1";s:12:"comment_edit";s:1:"1";s:6:"jquery";s:1:"1";s:6:"wp_css";b:0;s:5:"wp_js";b:0;s:9:"admin_css";b:0;s:8:"admin_js";b:0;s:15:"request_handler";s:1:"1";s:6:"snoopy";b:0;s:11:"setting_cat";s:1:"1";s:14:"setting_author";b:0;}
-
 ?>

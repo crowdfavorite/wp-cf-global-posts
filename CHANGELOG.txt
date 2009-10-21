@@ -31,6 +31,10 @@
 	- changing the installed check to only return bool values.  That way we're sure that the installed check is returning as expected (instead of a possible zero value).
 	
 # 1.6 - (trunk right now):
+	- * BUGFIX * stop infinite loop on post publish by removing the save_post hook for the global post plugin during addition of post.
 	- Adding convenience wrapper function for deleting a blog from the shadow blog
 		- cfgp_delete_blog_from_shadow_blog();
-	- dropped increment to 10 instead of 50
+	- Added filters for the following:
+		- Global Posts Blog's Domain name
+		- Global Posts Blog's Site ID
+		- Import increment amount (defaulted to 10)
