@@ -40,3 +40,4 @@
 	- Global Posts Blog's Domain name
 	- Global Posts Blog's Site ID
 	- Import increment amount (defaulted to 10)
+- Added README.txt file
