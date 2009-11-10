@@ -683,7 +683,7 @@ function cfgp_reset_shadow_blog() {
 	$results = array();
 	
 	/* Get list of all blogs */
-	$blog_list = get_blog_list(0, 'all');
+	$blog_list = get_blog_list(null, 'all');
 	
 	/* Delete all post_meta in all blogs */
 	foreach ($blog_list as $blog_info) {
