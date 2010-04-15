@@ -4,6 +4,7 @@
 Generates a 'shadow blog' where posts mu-install-wide are conglomorated into one posts table for fast data compilation and retrieval.
 
 ## Implementation
+- WordPress **MUST** be in MultiSite Mode!
 - Upload CF Global Posts Plugin to mu-plugins or plugins directory
 - If plugin uploaded to wp-content/plugins directory, visit the <a href="plugins.php">Plugins Page</a> and activate the plugin.
 - Visit the settings page, and click the "Set up Global Blog Now" button
@@ -11,16 +12,43 @@ Generates a 'shadow blog' where posts mu-install-wide are conglomorated into one
 - Any posts added since the activation will be added to the global posts.
 
 ## Dependancies 
-None
+- CF Compat (for json_encode functionality)
 
 ## Example
-None
+This example can go into a template file: 
+
+	<?php
+	/* Grab the posts from the shadow blog */
+	if (function_exists('cfgp_get_shadow_blog_id')) {
+		switch_to_blog(cfgp_get_shadow_blog_id());
+				/* Set our pagination */
+				$query_args = array(
+						'showposts' => 15,
+						'paged' => $paged,
+				);
+					
+				/* Use the $wp_query namespace, so we can utilize the WP pagination
+	functions */
+				$wp_query = new WP_Query($query_args);
+				if (have_posts()) {
+						while (have_posts()) {
+								the_post();
+								global $post;
+								echo 'Post Title: '; the_title();
+								echo '<hr />';
+								echo 'Post Content'; the_content();
+								echo '<hr />';
+						}
+				}
+		restore_current_blog();
+	}
+	?>
 
 ## Available Filters
 - `cfgp_define_import_increment`
 	- Override the default of 10 posts per blog import request.
 - `cfgp_big_admins`
-	- Takes an array of usernames that are able to see the "Reset Global Posts" button.  
+	- Takes an array of usernames that are able to see the "Reset Global Posts" button.	 
 	- The button is purposefully hidden, because this is a *major* action, and shouldn't be done often.
 - `cfgp_define_site_id`
 	- Allows the ability to change the site ID for the global posts blog from its default of 999999.  

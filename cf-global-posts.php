@@ -3,10 +3,28 @@
 Plugin Name: CF Global Posts 
 Plugin URI: http://crowdfavorite.com
 Description: Generates a 'shadow blog' where posts mu-install-wide are conglomorated into one posts table for fast data compilation and retrieval.
-Version: 1.6
+Version: 1.7
+Requires: 3.0
 Author: Crowd Favorite
 Author URI: http://crowdfavorite.com
 */
+
+load_plugin_textdomain('cf-global-posts');
+
+/* We need to not cause a Fatal PHP Error if this is ran when multisite isn't enabled. */
+if (!is_multisite()) {
+	// Throw an admin_notice if we're not in Network Mode and user can manage_options
+	add_action('admin_notices', create_function('',"
+		if (current_user_can('manage_options')) {
+			echo 
+				'<div class=\"error\"><p>'
+					.__('The <strong>Global Posts</strong> plugin requires WordPress to be configured as a Network.</p><p>See <a href=\"http://codex.wordpress.org/Create_A_Network\">Create A Network</a> for information on how to do this.', 'cf-global-posts')
+				.'</p></div>
+			';
+		}
+	"));
+	return;
+}
 
 /* Defining Shadow Blog's Site ID */
 define('CFGP_SITE_ID', apply_filters('cfgp_define_site_id', 999999));
@@ -26,7 +44,6 @@ else if (is_file(dirname(__FILE__).'/'.basename(__FILE__))) {
 	define('CFGP_FILE', dirname(__FILE__).'/'.basename(__FILE__));
 }
 
-load_plugin_textdomain('cf-global-posts');
 
 /*************************
 * Installation Functions *

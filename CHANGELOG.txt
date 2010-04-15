@@ -1,22 +1,19 @@
 # CF Global Posts Changelog
 
-## 1.1
-- Changing shadow blog's site id to 999999, and setting as a constant
-- Adding switch to site functions to bottom of plugin
-- Made a change to the 'import' functionality, so that when a blog is imported, all posts/postmeta/term_relationships in shadow blog from the incomming blog are erased.  After the shadow blog's information relating to that blog is removed, then it removes the postmeta from the source blog's postmeta table which relates the post to the shadow blog post.  After all that, the import proceeds as normal.
-	
-## 1.3
-- Fixing bug when checking for site id of 999999
-- define blog domain as constant
-- For installed-check, utilize the get_blog_id_from_url function, and reference the blog domain's constant for the domain
-- Remove the switch_to_site functions
-- Added comment count to post meta of clone post
-	- Comment count is updated on import and comment add/delete
-- Added 'reset entire shadow blog' button to admin screen.  (only shown to user 'crowdfavorite' by default, but is filterable)
-	- resent entire shadow blog is one bad function, so it's doubly-prompted and only shown to specific users.
-		
-## 1.4
-- Fixing tag saving on post saving.  WP 2.8 changed the way tags were saved (in the $_POST variable), so added a version_compare function to get the appropriate $_POST var to push to tags.
+## 1.7
+- Now **REQUIRES** 3.0
+- Does a nice admin error if WordPress isn't set up as MultiSite
+- Updated README.txt file
+
+## 1.6
+- * BUGFIX * stop infinite loop on post publish by removing the save_post hook for the global post plugin during addition of post.
+- Adding convenience wrapper function for deleting a blog from the shadow blog
+	- cfgp_delete_blog_from_shadow_blog();
+- Added filters for the following:
+	- Global Posts Blog's Domain name
+	- Global Posts Blog's Site ID
+	- Import increment amount (defaulted to 10)
+- Added README.txt file
 
 ## 1.5
 - Adding post information functions for easy retrieval of post's information while in the loop
@@ -31,13 +28,23 @@
 - defining the import increment
 - upping increment to 50, instead of 5
 - changing the installed check to only return bool values.  That way we're sure that the installed check is returning as expected (instead of a possible zero value).
+
+## 1.4
+- Fixing tag saving on post saving.  WP 2.8 changed the way tags were saved (in the $_POST variable), so added a version_compare function to get the appropriate $_POST var to push to tags.
+
+## 1.3
+- Fixing bug when checking for site id of 999999
+- define blog domain as constant
+- For installed-check, utilize the get_blog_id_from_url function, and reference the blog domain's constant for the domain
+- Remove the switch_to_site functions
+- Added comment count to post meta of clone post
+	- Comment count is updated on import and comment add/delete
+- Added 'reset entire shadow blog' button to admin screen.  (only shown to user 'crowdfavorite' by default, but is filterable)
+	- resent entire shadow blog is one bad function, so it's doubly-prompted and only shown to specific users.
+		
 	
-## 1.6
-- * BUGFIX * stop infinite loop on post publish by removing the save_post hook for the global post plugin during addition of post.
-- Adding convenience wrapper function for deleting a blog from the shadow blog
-	- cfgp_delete_blog_from_shadow_blog();
-- Added filters for the following:
-	- Global Posts Blog's Domain name
-	- Global Posts Blog's Site ID
-	- Import increment amount (defaulted to 10)
-- Added README.txt file
+## 1.1
+- Changing shadow blog's site id to 999999, and setting as a constant
+- Adding switch to site functions to bottom of plugin
+- Made a change to the 'import' functionality, so that when a blog is imported, all posts/postmeta/term_relationships in shadow blog from the incomming blog are erased.  After the shadow blog's information relating to that blog is removed, then it removes the postmeta from the source blog's postmeta table which relates the post to the shadow blog post.  After all that, the import proceeds as normal.
+	
