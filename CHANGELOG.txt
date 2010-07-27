@@ -1,7 +1,7 @@
 # CF Global Posts Changelog
 
 ## trunk
-- Don't clone future posts
+- **BUGFIX** Don't clone future posts
 
 ## 1.7
 - Now **REQUIRES** 3.0
@@ -9,7 +9,7 @@
 - Updated README.txt file
 
 ## 1.6
-- * BUGFIX * stop infinite loop on post publish by removing the save_post hook for the global post plugin during addition of post.
+- **BUGFIX** stop infinite loop on post publish by removing the save_post hook for the global post plugin during addition of post.
 - Adding convenience wrapper function for deleting a blog from the shadow blog
 	- cfgp_delete_blog_from_shadow_blog();
 - Added filters for the following:
