@@ -1,5 +1,8 @@
 # CF Global Posts Changelog
 
+## trunk
+- Don't clone future posts
+
 ## 1.7
 - Now **REQUIRES** 3.0
 - Does a nice admin error if WordPress isn't set up as MultiSite
