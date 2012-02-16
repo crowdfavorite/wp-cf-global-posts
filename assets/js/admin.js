@@ -28,9 +28,7 @@ jQuery(function($){
 			alert(CFGPAdminJs.langResetCancel);
 		}
 	});
-});
 
-jQuery(function($) {
 	var ajaxSpinner = '<div class="ajax-spinner"><img src="images/loading.gif" style="margin: 0 6px 0 0; vertical-align: middle" /> <span class="ajax-loading">' + CFGPAdminJs.langProcessing + '</span></div>';
 	var originalBGColortr = jQuery("#blogrow-1");
 	var originalBGColor = originalBGColortr.children("td:first").css("backgroundColor");
