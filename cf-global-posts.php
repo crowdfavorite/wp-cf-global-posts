@@ -809,131 +809,123 @@ function cfgp_operations_form() {
 		<?php screen_icon(); ?>
 		<h2><?php echo __('CF Global Posts Operations', 'cf-global-posts'); ?></h2>
 		<?php
-		if (!function_exists('cf_json_encode')) {
+		if (!cfgp_is_installed()) {
 			?>
-			<p><?php _e('This plugin requires functionality contained in the \'cf-compat\' plugin.  This plugin must be activated before utilizing this page.', 'cf-global-posts'); ?></p>
+			<h3><?php _e('Global Blog has not been setup','cf-global-posts'); ?></h3>
+			<h4><?php _e('Click the button below to set up the Global Blog', 'cf-global-posts'); ?></h4>
+			<form method="post">
+				<input type="hidden" name="cf_action" value="cfgp_setup_shadow_blog" />
+				<button class="button-primary" type="submit"><?php _e('Set up Global Blog Now', 'cf-global-posts'); ?></button>
+			</form>
 			<?php
-			return;
 		}
 		else {
-			if (!cfgp_is_installed()) {
-				?>
-				<h3><?php _e('Global Blog has not been setup','cf-global-posts'); ?></h3>
-				<h4><?php _e('Click the button below to set up the Global Blog', 'cf-global-posts'); ?></h4>
-				<form method="post">
-					<input type="hidden" name="cf_action" value="cfgp_setup_shadow_blog" />
-					<button class="button-primary" type="submit"><?php _e('Set up Global Blog Now', 'cf-global-posts'); ?></button>
-				</form>
+			?>
+			<div id="doing-import" style="border: 1px solid #464646; margin: 20px 0; padding: 10px 20px;">
+				<h3></h3>
+				<p id="import-ticks"></p>
+			</div>
+			<table class="widefat" style="width: 450px; margin: 20px 0">
+				<thead>
+					<tr>
+						<th scope="col"><?php _e('Blog Name', 'cf-global-posts'); ?></th>
+						<th scope="col" style="width: 50px; text-align:center;"><?php _e('Action', 'cf-global-posts'); ?></th>
+						<th scope="col" style="width: 150px; text-align:center;"><?php _e('Status', 'cf-global-posts'); ?></th>
+					</tr>
+				</thead>
+				<tbody>
 				<?php
-			}
-			else {
-				?>
-				<div id="doing-import" style="border: 1px solid #464646; margin: 20px 0; padding: 10px 20px;">
-					<h3></h3>
-					<p id="import-ticks"></p>
-				</div>
-				<table class="widefat" style="width: 450px; margin: 20px 0">
-					<thead>
-						<tr>
-							<th scope="col"><?php _e('Blog Name', 'cf-global-posts'); ?></th>
-							<th scope="col" style="width: 50px; text-align:center;"><?php _e('Action', 'cf-global-posts'); ?></th>
-							<th scope="col" style="width: 150px; text-align:center;"><?php _e('Status', 'cf-global-posts'); ?></th>
-						</tr>
-					</thead>
-					<tbody>
-					<?php
-					$shadow_blog = cfgp_get_shadow_blog_id();
-					$blog_ids = array();
-					$sql = 'SELECT * FROM '.$wpdb->blogs.' ORDER BY site_id, blog_id';
+				$shadow_blog = cfgp_get_shadow_blog_id();
+				$blog_ids = array();
+				$sql = 'SELECT * FROM '.$wpdb->blogs.' ORDER BY site_id, blog_id';
 		
-					$results = $wpdb->get_results($sql);
-					if (is_array($results)) {
-						foreach ($results as $blog) {
-							if ($blog->blog_id == $shadow_blog) { continue; }
-							$details = get_blog_details($blog->blog_id);
-							$blog_ids[] = $blog->blog_id;
-							?>
-							<tr id="blogrow-<?php echo $blog->blog_id; ?>">
-								<td style="vertical-align:middle;"><?php echo $details->blogname; ?></th>
-								<td>
-									<form method="post" name="blog_import_<?php echo attribute_escape($blog->blog_id); ?>" id="blog_import_<?php echo attribute_escape($blog->blog_id); ?>">
-									<input type="hidden" name="blog_id" value="<?php echo attribute_escape($blog->blog_id); ?>" />
-									<input type="hidden" name="cf_action" value="add_blog_to_shadow_blog">
-									<button class="button" id="start_import_blog_<?php echo attribute_escape($blog->blog_id); ?>"/><?php _e('Import', 'cf-global-posts'); ?></button>
-									</form>
-								</td>
-								<td class="cfgp_status" style="vertical-align:middle;">
-									<div id="status-<?php echo $blog->blog_id; ?>">
-										<?php _e('Click Import to proceed', 'cf-global-posts'); ?>
-									</div>
-								</td>
-							</tr>
-							<?php
-						}
+				$results = $wpdb->get_results($sql);
+				if (is_array($results)) {
+					foreach ($results as $blog) {
+						if ($blog->blog_id == $shadow_blog) { continue; }
+						$details = get_blog_details($blog->blog_id);
+						$blog_ids[] = $blog->blog_id;
 						?>
-						<tr>
-							<td colspan="3">
-								<input type="hidden" id="all_blog_ids" name="all_blog_ids" value="<?php echo implode(',',$blog_ids); ?>" />
-								<p>
-									<strong><?php _e('NOTE: Doing this operation during peak server loads may cause undesired effects!','cf-global-posts'); ?></strong>
-								</p>
-								<button class="button-primary" id="start_import_all_blogs"><?php _e('Import All','cf-global-posts'); ?></button>
+						<tr id="blogrow-<?php echo $blog->blog_id; ?>">
+							<td style="vertical-align:middle;"><?php echo $details->blogname; ?></th>
+							<td>
+								<form method="post" name="blog_import_<?php echo attribute_escape($blog->blog_id); ?>" id="blog_import_<?php echo attribute_escape($blog->blog_id); ?>">
+								<input type="hidden" name="blog_id" value="<?php echo attribute_escape($blog->blog_id); ?>" />
+								<input type="hidden" name="cf_action" value="add_blog_to_shadow_blog">
+								<button class="button" id="start_import_blog_<?php echo attribute_escape($blog->blog_id); ?>"/><?php _e('Import', 'cf-global-posts'); ?></button>
+								</form>
+							</td>
+							<td class="cfgp_status" style="vertical-align:middle;">
+								<div id="status-<?php echo $blog->blog_id; ?>">
+									<?php _e('Click Import to proceed', 'cf-global-posts'); ?>
+								</div>
 							</td>
 						</tr>
 						<?php
 					}
-					else {
-						_e('No Blogs available', 'cf-global-posts');
-					}
 					?>
-					</tbody>
-				</table>
-				<?php
-				/* Display Reset Global Post Button here */
-				$acceptable_big_admins = apply_filters('cfgp_big_admins', array());
-				if (in_array($userdata->user_login, $acceptable_big_admins)) {
+					<tr>
+						<td colspan="3">
+							<input type="hidden" id="all_blog_ids" name="all_blog_ids" value="<?php echo implode(',',$blog_ids); ?>" />
+							<p>
+								<strong><?php _e('NOTE: Doing this operation during peak server loads may cause undesired effects!','cf-global-posts'); ?></strong>
+							</p>
+							<button class="button-primary" id="start_import_all_blogs"><?php _e('Import All','cf-global-posts'); ?></button>
+						</td>
+					</tr>
+					<?php
+				}
+				else {
+					_e('No Blogs available', 'cf-global-posts');
+				}
+				?>
+				</tbody>
+			</table>
+			<?php
+			/* Display Reset Global Post Button here */
+			$acceptable_big_admins = apply_filters('cfgp_big_admins', array());
+			if (in_array($userdata->user_login, $acceptable_big_admins)) {
 
-					/* This button will:
-					* 		1) delete the shadow blog
-					* 		2) remove all post_meta keys ('_cfgp_clone_id')
-					*/
-					?>
-					<script type="text/javascript">
-						jQuery(function($){
-							$("#reset_shadow_blog_button").click(function(){
-								var confirmation = confirm("Are you sure that you want to reset the entire shadow blog?? \n\nExisting blogs will NOT be automatically added back in.  You will need to use the form above");
-								if (confirmation) {
-									if(confirm("Resetting Shadow Blog now...")){
-									$.post(
-										'index.php',
-										{
-											cf_action: "reset_entire_shadow_blog"
-										},
-										function(r){
-											if (r.success == "true") {
-												alert("Shadow blog successfully reset!  Refreshing page now...");
-												document.location = document.location;
-											}
-											else {
-												alert("something went wrong, Please try again");
-											}
-										},
-										'json'
-									);
-									}
-									else {
-										alert("Reset of Shadow Blog Cancelled");
-									}
+				/* This button will:
+				* 		1) delete the shadow blog
+				* 		2) remove all post_meta keys ('_cfgp_clone_id')
+				*/
+				?>
+				<script type="text/javascript">
+					jQuery(function($){
+						$("#reset_shadow_blog_button").click(function(){
+							var confirmation = confirm("Are you sure that you want to reset the entire shadow blog?? \n\nExisting blogs will NOT be automatically added back in.  You will need to use the form above");
+							if (confirmation) {
+								if(confirm("Resetting Shadow Blog now...")){
+								$.post(
+									'index.php',
+									{
+										cf_action: "reset_entire_shadow_blog"
+									},
+									function(r){
+										if (r.success == "true") {
+											alert("Shadow blog successfully reset!  Refreshing page now...");
+											document.location = document.location;
+										}
+										else {
+											alert("something went wrong, Please try again");
+										}
+									},
+									'json'
+								);
 								}
 								else {
 									alert("Reset of Shadow Blog Cancelled");
 								}
-							});
+							}
+							else {
+								alert("Reset of Shadow Blog Cancelled");
+							}
 						});
-					</script>
-					<button class="button-primary" id="reset_shadow_blog_button" name="reset_shadow_blog_button">Reset Entire Shadow Blog</button>
-					<?php
-				}
+					});
+				</script>
+				<button class="button-primary" id="reset_shadow_blog_button" name="reset_shadow_blog_button">Reset Entire Shadow Blog</button>
+				<?php
 			}
 		}
 		?>
