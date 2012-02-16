@@ -9,6 +9,8 @@ Author: Crowd Favorite
 Author URI: http://crowdfavorite.com
 */
 
+define('CFGP_VER', '1.7');
+
 load_plugin_textdomain('cf-global-posts');
 
 /* We need to not cause a Fatal PHP Error if this is ran when multisite isn't enabled. */
