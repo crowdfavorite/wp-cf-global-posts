@@ -777,10 +777,6 @@ function cfgp_request_handler() {
 }
 add_action('init', 'cfgp_request_handler');
 
-
-wp_enqueue_script('jquery');
-
-
 function cfgp_operations_form() {
 	global $wpdb, $userdata;
 	?>
