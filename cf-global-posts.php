@@ -737,7 +737,7 @@ function cfgp_request_handler() {
 				cfgp_save_settings();
 				wp_redirect(trailingslashit(get_bloginfo('wpurl')).'wp-admin/options-general.php?page='.basename(__FILE__).'&updated=true');
 				die();
-				break;
+			break;
 				
 			case 'add_blog_to_shadow_blog':
 				/* Don't have php timeout on us */
@@ -762,16 +762,16 @@ function cfgp_request_handler() {
 				}
 				
 				echo json_encode( cfgp_batch_import_blog( $blog_id, $offset, $increment ) );
-				
-				exit();
-				break;
+				exit;
+			break;
 			case 'cfgp_setup_shadow_blog':
 				cfgp_install();
 				/* We don't want to exit, b/c we want the page to refresh */
-				break;
+			break;
 			case 'reset_entire_shadow_blog':
 				echo json_encode(cfgp_reset_shadow_blog());
 				exit;
+			break;
 		}
 	}
 }
