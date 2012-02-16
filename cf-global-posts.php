@@ -761,12 +761,7 @@ function cfgp_request_handler() {
 					cfgp_flush_blog_data_from_shadow($blog_id);
 				}
 				
-				/* Admin page won't let somebody into this functionality,
-				* 	but in case someone hacks the url, don't try to do
-				* 	the import w/o the cf-compat plugin */
-				if (!function_exists('cf_json_encode')) { exit(); }
-				
-				echo cf_json_encode( cfgp_batch_import_blog( $blog_id, $offset, $increment ) );
+				echo json_encode( cfgp_batch_import_blog( $blog_id, $offset, $increment ) );
 				
 				exit();
 				break;
@@ -775,7 +770,7 @@ function cfgp_request_handler() {
 				/* We don't want to exit, b/c we want the page to refresh */
 				break;
 			case 'reset_entire_shadow_blog':
-				echo cf_json_encode(cfgp_reset_shadow_blog());
+				echo json_encode(cfgp_reset_shadow_blog());
 				exit;
 		}
 	}
