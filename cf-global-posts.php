@@ -903,12 +903,6 @@ function cfgp_operations_form() {
 	<?php
 }
 
-function cfgp_admin_js() {
-	header('Content-type: text/javascript');
-	require 'assets/js/admin.js';
-	die();
-}
-
 function cfgp_admin_head($hook_suffix) {
 	if ($hook_suffix == 'settings_page_cf-global-posts') {
 		wp_enqueue_script('cfgp_admin_js', admin_url('?cf_action=cfgp_admin_js'), array('jquery'), CFGP_VER);
