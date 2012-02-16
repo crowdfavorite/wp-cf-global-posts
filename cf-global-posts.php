@@ -737,9 +737,10 @@ function cfgp_request_handler() {
 	if (!empty($_GET['cf_action'])) {
 		switch ($_GET['cf_action']) {
 			case 'cfgp_admin_js':
-				cfgp_admin_js();
+				header('Content-type: text/javascript');
+				require 'assets/js/admin.js';
 				die();
-				break;
+			break;
 		}
 	}
 	if (!empty($_POST['cf_action'])) {
@@ -893,39 +894,6 @@ function cfgp_operations_form() {
 				* 		2) remove all post_meta keys ('_cfgp_clone_id')
 				*/
 				?>
-				<script type="text/javascript">
-					jQuery(function($){
-						$("#reset_shadow_blog_button").click(function(){
-							var confirmation = confirm("Are you sure that you want to reset the entire shadow blog?? \n\nExisting blogs will NOT be automatically added back in.  You will need to use the form above");
-							if (confirmation) {
-								if(confirm("Resetting Shadow Blog now...")){
-								$.post(
-									'index.php',
-									{
-										cf_action: "reset_entire_shadow_blog"
-									},
-									function(r){
-										if (r.success == "true") {
-											alert("Shadow blog successfully reset!  Refreshing page now...");
-											document.location = document.location;
-										}
-										else {
-											alert("something went wrong, Please try again");
-										}
-									},
-									'json'
-								);
-								}
-								else {
-									alert("Reset of Shadow Blog Cancelled");
-								}
-							}
-							else {
-								alert("Reset of Shadow Blog Cancelled");
-							}
-						});
-					});
-				</script>
 				<button class="button-primary" id="reset_shadow_blog_button" name="reset_shadow_blog_button">Reset Entire Shadow Blog</button>
 				<?php
 			}
@@ -936,84 +904,27 @@ function cfgp_operations_form() {
 }
 
 function cfgp_admin_js() {
-	$wpserver = get_bloginfo('url');
-	if(strpos($_SERVER['SERVER_NAME'],'www.') !== false && strpos($wpserver,'www.') === false) {
-		$wpserver = str_replace('http://','http://www.',$wpserver);
-	}
-	
 	header('Content-type: text/javascript');
-	?>
-	jQuery(function($) {
-		var ajaxSpinner = '<div class="ajax-spinner"><img src="images/loading.gif" style="margin: 0 6px 0 0; vertical-align: middle" /> <span class="ajax-loading"><?php _e('Processing...','cf-global-posts'); ?></span></div>';
-		var ajaxComplete = 'Complete!';
-		var originalBGColortr = jQuery("#blogrow-1");
-		var originalBGColor = originalBGColortr.children("td:first").css("backgroundColor");
-		import_box = $("#doing-import");
-		import_box.hide();
-	
-		import_buttons = $("button[id^='start_import_blog_']");
-		import_all_button = $("button[id^='start_import_all_blogs']");
-	
-		import_buttons.click(function(){
-			//$(document).scrollTop(0);
-			blogId = $(this).siblings("input[name='blog_id']").val();
-			import_buttons.attr('disabled','disabled');
-			var start_tr = jQuery("#blogrow-"+blogId);
-			start_tr.children("td").css({backgroundColor:"#FAEDC3"});
-			jQuery('#status-'+blogId).html(ajaxSpinner);
-			do_batch(blogId, 0);
-			//import_box.show().removeClass('updated fade').children('h3').text('Import in progress, do not navigate away from this page...').siblings("#import-ticks").text('#');
-			return false;
-		});
-
-		import_all_button.click(function() {
-			import_buttons.attr('disabled','disabled');
-			blogIds = $("#all_blog_ids").val().split(',');
-			for (var i in blogIds) {
-				var blogId = blogIds[i];
-				var start_tr = jQuery("#blogrow-"+blogId);
-				start_tr.children("td").css({backgroundColor:"#FAEDC3"});
-				jQuery('#status-'+blogId).html(ajaxSpinner);
-				do_batch(blogId, 0);
-			}
-			return false;
-		});
-
-		function do_batch(blogId, offset_amount) {
-			$.post(
-				'index.php',
-				{
-					cf_action:'add_blog_to_shadow_blog',
-					blog_id: blogId,
-					offset: offset_amount
-				},
-				function(r){
-					if (r.status == 'finished') {
-						//import_box.addClass('updated fade').children('h3').text('Finished Importing!').siblings("#import-ticks").text('');
-						import_buttons.removeAttr('disabled');
-						var finished_tr = jQuery("#blogrow-"+blogId);
-						finished_tr.children("td").css({backgroundColor:originalBGColor});				
-						jQuery('#status-'+blogId).html(ajaxComplete);
-						return;
-					}
-					else {
-						//import_box.children("#import-ticks").text(import_box.children("#import-ticks").text()+' # ');
-						do_batch(blogId, r.next_offset);
-					}
-				},
-				'json'
-			);
-		}
-	});	<?php
+	require 'assets/js/admin.js';
 	die();
 }
 
-function cfgp_admin_head() {
-	echo '<script type="text/javascript" src="'.trailingslashit(get_bloginfo('wpurl')).'index.php?cf_action=cfgp_admin_js"></script>';
+function cfgp_admin_head($hook_suffix) {
+	if ($hook_suffix == 'settings_page_cf-global-posts') {
+		wp_enqueue_script('cfgp_admin_js', admin_url('?cf_action=cfgp_admin_js'), array('jquery'), CFGP_VER);
+		wp_localize_script('cfgp_admin_js', 'CFGPAdminJs', array(
+			'ajaxEndpoint'		=> admin_url(),
+			'langProcessing'	=> __('Processing&hellip;', 'cf-global-posts'),
+			'langAreUSure'		=> __('Are you sure that you want to reset the entire shadow blog?? \n\nExisting blogs will NOT be automatically added back in.  You will need to use the form above', 'cf-global-posts'),
+			'langResettingNow'	=> __('Resetting Shadow Blog now&hellip;', 'cf-global-posts'),
+			'langResetSuccess'	=> __('Shadow blog successfully reset!  Refreshing page now&hellip;', 'cf-global-posts'),
+			'langResetError'	=> __('something went wrong, Please try again', 'cf-global-posts'),
+			'langResetCancel'	=> __('Reset of Shadow Blog Cancelled', 'cf-global-posts'),
+			'langComplete'		=> __('Complete!', 'cf-global-posts'),
+		));
+	}
 }
-if (isset($_GET['page']) && $_GET['page'] == basename(__FILE__)) {
-	add_action('admin_head', 'cfgp_admin_head');
-}
+add_action('admin_enqueue_scripts', 'cfgp_admin_head');
 
 function cfgp_admin_menu() {
 	global $wpdb;
