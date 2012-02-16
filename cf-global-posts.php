@@ -34,18 +34,6 @@ define('CFGP_SITE_IMPORT_INCREMENT', apply_filters('cfgp_define_import_increment
 
 // ini_set('display_errors', '1'); ini_set('error_reporting', E_ALL);
 
-if (!defined('PLUGINDIR')) {
-	define('PLUGINDIR','wp-content/plugins');
-}
-
-if (is_file(trailingslashit(ABSPATH.PLUGINDIR).basename(__FILE__))) {
-	define('CFGP_FILE', trailingslashit(ABSPATH.PLUGINDIR).basename(__FILE__));
-}
-else if (is_file(dirname(__FILE__).'/'.basename(__FILE__))) {
-	define('CFGP_FILE', dirname(__FILE__).'/'.basename(__FILE__));
-}
-
-
 /*************************
 * Installation Functions *
 *************************/
