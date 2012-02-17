@@ -712,7 +712,7 @@ function cfgp_reset_shadow_blog() {
 	
 	/* Delete the shadow blog */
 	if (!function_exists('wpmu_delete_blog')) {
-		require_once(ABSPATH.'wp-admin/includes/mu.php');
+		require_once(ABSPATH.'wp-admin/includes/ms.php');
 	}
 	wpmu_delete_blog(cfgp_get_shadow_blog_id(), true);
 	
