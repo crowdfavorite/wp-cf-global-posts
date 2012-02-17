@@ -11,6 +11,7 @@
 	if (is_array($results)) {
 		foreach ($results as $blog) {
 			if ($blog->blog_id == $shadow_blog) { continue; }
+			
 			$details = get_blog_details($blog->blog_id);
 			$blog_ids[] = $blog->blog_id;
 			?>
