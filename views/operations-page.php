@@ -7,7 +7,7 @@
 	}
 	else {
 		cfgp_load_view('import-table-ajax-receipt');
-		cfgp_load_view('import-table', compact('results', 'blog_ids'));
+		cfgp_load_view('import-table', compact('results', 'blog_ids', 'shadow_blog'));
 		
 		// Conditional as only *very few* users should have access to this
 		if ($show_reset_button) {
