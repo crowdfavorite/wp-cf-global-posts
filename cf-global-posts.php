@@ -611,11 +611,13 @@ if (cfgp_is_installed()) {
 function cfgp_delete_cfgp_post_meta($blog_id) {
 	global $wpdb;
 	
+	$prefix = ($blog_id == 1) ? $wpdb->prefix : $wpdb->prefix.$blog_id.'_';
+	
 	/* Erase all the post_meta records, relating to the 
 	* 	shadow blog, from the incomming blog */
 	$sql = '
 		DELETE FROM 
-			wp_'.$blog_id.'_postmeta
+			'.$prefix.'postmeta
 		WHERE
 			meta_key = "_cfgp_clone_id"
 	';
@@ -646,6 +648,8 @@ function cfgp_delete_blog_from_shadow_blog($blog_id) {
 function cfgp_flush_blog_data_from_shadow($blog_id) {
 	global $wpdb;
 	
+	$prefix = ($blog_id == 1) ? $wpdb->prefix : $wpdb->prefix.$blog_id.'_';
+	
 	/* Grab all the clone id's for the related posts from 
 	* 	the incomming blog */
 	$sql = '
@@ -653,7 +657,7 @@ function cfgp_flush_blog_data_from_shadow($blog_id) {
 			post_id AS original_id, 
 			meta_value AS clone_id
 		FROM 
-			wp_'.$blog_id.'_postmeta
+			'.$prefix.'postmeta
 		WHERE
 			meta_key = "_cfgp_clone_id"
 	';
