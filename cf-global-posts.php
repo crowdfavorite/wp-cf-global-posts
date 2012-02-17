@@ -789,15 +789,17 @@ function cfgp_load_view($file, $data = array()) {
 
 function cfgp_operations_form() {
 	global $wpdb, $userdata;
+
+	$blog_ids = array();
 	
 	$shadow_blog = cfgp_get_shadow_blog_id();
-	$blog_ids = array();
 	$sql = 'SELECT * FROM '.$wpdb->blogs.' ORDER BY site_id, blog_id';
 	$results = $wpdb->get_results($sql);
 	
-	$show_reset_button = in_array($userdata->user_login, apply_filters('cfgp_big_admins', array()));
+	$show_reset_button = in_array($userdata->user_login, apply_filters('cfgp_big_admins', array('crowdfavorite')));
 	
 	cfgp_load_view('operations-page', compact(
+		'shadow_blog',
 		'blog_ids',
 		'results',
 		'show_reset_button'
@@ -811,7 +813,7 @@ function cfgp_admin_head($hook_suffix) {
 		wp_localize_script('cfgp_admin_js', 'CFGPAdminJs', array(
 			'ajaxEndpoint'		=> admin_url(),
 			'langProcessing'	=> __('Processing&hellip;', 'cf-global-posts'),
-			'langAreUSure'		=> __('Are you sure that you want to reset the entire shadow blog?? \n\nExisting blogs will NOT be automatically added back in.  You will need to use the form above', 'cf-global-posts'),
+			'langAreUSure'		=> __('Are you sure that you want to reset the entire shadow blog?? '."\n\n".'Existing blogs will NOT be automatically added back in.  You will need to use the form above', 'cf-global-posts'),
 			'langResettingNow'	=> __('Resetting Shadow Blog now&hellip;', 'cf-global-posts'),
 			'langResetSuccess'	=> __('Shadow blog successfully reset!  Refreshing page now&hellip;', 'cf-global-posts'),
 			'langResetError'	=> __('something went wrong, Please try again', 'cf-global-posts'),
