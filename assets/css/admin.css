@@ -1,0 +1,9 @@
+.cfgp_status {
+	vertical-align:middle;
+	text-align:center;
+}
+#doing-import {
+	border: 1px solid #464646;
+	margin: 20px 0;
+	padding: 10px 20px;
+}
