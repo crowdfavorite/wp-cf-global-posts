@@ -826,13 +826,13 @@ function cfgp_admin_menu() {
 	global $wpdb;
 	
 	// force this to be only visible to site admins
-	if (!is_site_admin()) { return; }
+	if (!is_super_admin()) { return; }
 	
 	if (current_user_can('manage_options')) {
 		add_options_page(
 			__('CF Global Posts Functions', '')
 			, __('CF Global Posts', '')
-			, 10
+			, 'manage_options'
 			, basename(__FILE__)
 			, 'cfgp_operations_form'
 		);
