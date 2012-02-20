@@ -337,6 +337,11 @@ function cfgp_clone_post_on_publish($post_id, $post) {
 	/* Add tags to clone post */
 	$tag_results = cfgp_do_tags($clone_id, $tags);
 
+	/******************
+	* MORE TAXONOMIES *
+	******************/
+	do_action('cfgp_clone_post_taxonomies', compact('clone_id', 'post'));
+
 	/*****************
 	* POST META WORK *
 	*****************/
