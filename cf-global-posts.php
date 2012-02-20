@@ -277,13 +277,7 @@ function cfgp_clone_post_on_publish($post_id, $post) {
 	global $wpdb;
 	
 	/* If it's a draft, get the heck out of dodge */
-	if ($post->post_status == 'draft') { return; }
-	
-	/* This is a revision, not something that needs to get cloned */
-	if ($post->post_status == 'inherit') { return; }
-	
-	/* This	is a scheduled posted, no need to clone	until published	*/
-	if ($post->post_status == 'future') { return; }
+	if ($post->post_status != 'publish') { return; }
 	
 	/* Get the Shadow Blog's ID */
 	$cfgp_blog_id = cfgp_get_shadow_blog_id();
