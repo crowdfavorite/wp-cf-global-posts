@@ -221,21 +221,29 @@ function cfgp_do_tags($clone_id, $tags) {
 		return true;
 	}
 }
-function _cfgp_push_all_post_meta($all_post_meta, $clone_id) {
+function cfgp_push_all_post_meta(
+	$results,
+	$clone_id,
+	$original_blog_id,
+	$all_post_meta,
+	$permalink,
+	$original_post_id
+	) {
+
 	/* We should already be switched to blog!! */
 	if (!is_array($all_post_meta)) {
 		/* Require an array */
 		return false;
 	}
 	
-	$excluded_values = array(
+	$excluded_values = apply_filters('cfgp_exluded_post_meta_values', array(
 		'_edit_last',
 		'_edit_lock',
 		'_encloseme',
 		'_pingme',
 		'_cfgp_clone_id'
-	);
-	$excluded_values = apply_filters('cfgp_exluded_post_meta_values', $excluded_values);
+	));
+	
 	foreach ($all_post_meta as $key => $value) {
 		if (in_array($key, $excluded_values)) { 
 			/* we don't need to update that key */
@@ -251,13 +259,19 @@ function _cfgp_push_all_post_meta($all_post_meta, $clone_id) {
 			$results[$key] = update_post_meta($clone_id, $key, $value[0]);
 		}
 	}
+	
 	return $results;
 }
-function cfgp_do_post_meta($clone_id, $original_blog_id, $all_post_meta, $permalink, $original_post_id) {
-	global $wpdb;
-	
-	/* Now add all post_meta to clone post */
-	$results = _cfgp_push_all_post_meta($all_post_meta, $clone_id);
+add_filter('cfgp_do_post_meta', 'cfgp_push_all_post_meta', null, 6);
+
+function cfgp_do_global_blog_post_meta(
+	$results,
+	$clone_id,
+	$original_blog_id,
+	$all_post_meta,
+	$permalink,
+	$original_post_id
+	) {
 	
 	/* Add the original blog's id to the clone's post meta */
 	$results['_cfgp_original_blog_id'] = update_post_meta($clone_id, '_cfgp_original_blog_id', $original_blog_id);
@@ -267,8 +281,10 @@ function cfgp_do_post_meta($clone_id, $original_blog_id, $all_post_meta, $permal
 	
 	/* Add the original blog posts's id for an easy way to reference that */
 	$results['_cfgp_original_post_id'] = update_post_meta($clone_id, '_cfgp_original_post_id', $original_post_id);
+	
 	return $results;
 }
+add_filter('cfgp_do_post_meta', 'cfgp_do_global_blog_post_meta', null, 6);
 
 /***************************
 * Functions called from WP *
@@ -346,7 +362,13 @@ function cfgp_clone_post_on_publish($post_id, $post) {
 	* POST META WORK *
 	*****************/
 	/* Add original post's postmeta to clone post */
-	$post_meta_results = cfgp_do_post_meta($clone_id, $current_blog_id, $all_post_meta, $permalink, $old_post_id);
+	$post_meta_results = apply_filters('cfgp_do_post_meta', array(),
+		$clone_id,
+		$current_blog_id,
+		$all_post_meta,
+		$permalink,
+		$old_post_id
+	);
 
 	restore_current_blog();
 
@@ -529,7 +551,13 @@ function cfgp_batch_import_blog($blog_id, $offset, $increment) {
 			/*****************
 			* POST META WORK *
 			*****************/
-			$post_meta_results = cfgp_do_post_meta($clone_id, $blog_id, $post_meta, $permalink, $old_post_id);
+			$post_meta_results = apply_filters('cfgp_do_post_meta', array(), 
+				$clone_id,
+				$blog_id,
+				$post_meta,
+				$permalink,
+				$old_post_id
+			);
 			
 			$clone_info[] = array(
 				'post_id' => $old_post_id,
