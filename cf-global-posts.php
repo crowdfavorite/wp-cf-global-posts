@@ -820,11 +820,14 @@ function cfgp_load_view($file, $data = array()) {
 
 function cfgp_operations_form() {
 	global $wpdb, $userdata;
-
+	
+	$current_site = get_current_site();
+	
 	$blog_ids = array();
 	
 	$shadow_blog = cfgp_get_shadow_blog_id();
-	$sql = 'SELECT * FROM '.$wpdb->blogs.' ORDER BY site_id, blog_id';
+	$sql = 'SELECT * FROM '.$wpdb->blogs.' WHERE site_id='.$current_site->id.' ORDER BY site_id, blog_id';
+	error_log($sql);
 	$results = $wpdb->get_results($sql);
 	
 	$show_reset_button = in_array($userdata->user_login, apply_filters('cfgp_big_admins', array('crowdfavorite')));
