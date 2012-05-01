@@ -68,6 +68,23 @@ function cfgp_get_permalink($post_id = null) {
 function cfgp_the_permalink($post_id = null) {
 	echo cfgp_get_permalink($post_id);
 }
+function cfgp_get_home_url($path = '', $scheme = null, $post_id = null) {
+	/* Figure out the post ID */
+	if (!$post_id) {
+		global $post;
+		$post_id = $post->ID;
+	}
+	
+	/* Get the original blog's id */
+	$blog_id = get_post_meta($post_id, '_cfgp_original_blog_id', true);
+	
+	/* Grab the info, we can just pass in the blog id, no need to switch */
+	$home_url = get_home_url($blog_id, $path, $scheme);
+	return $home_url;
+}
+function cfgp_home_url($path = '', $scheme = null, $post_id = null) {
+	echo cfgp_get_home_url($path, $scheme, $post_id);
+}
 function cfgp_get_bloginfo($info = '', $post_id = null) {
 	/* Figure out the post ID */
 	if (!$post_id) {
