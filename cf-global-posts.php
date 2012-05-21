@@ -309,8 +309,8 @@ add_filter('cfgp_do_post_meta', 'cfgp_do_global_blog_post_meta', null, 6);
 function cfgp_clone_post_on_publish($post_id, $post) {
 	global $wpdb;
 	
-	/* If it's a draft, get the heck out of dodge */
-	if ($post->post_status != 'publish') { return; }
+	/* Allow for draft, pending, trash as well as publish - a published post can transition into these */
+	if (!in_array($post->post_status, array('publish', 'draft', 'pending', 'trash'))) { return; }
 	
 	/* Get the Shadow Blog's ID */
 	$cfgp_blog_id = cfgp_get_shadow_blog_id();
@@ -637,7 +637,7 @@ function cfgp_delete_post_from_global($post_id) {
 	
 	/* grab right blog id */
 	$cfgp_blog_id = cfgp_get_shadow_blog_id();
-	
+
 	/* switch to blog */
 	switch_to_blog($cfgp_blog_id);
 	
@@ -647,7 +647,7 @@ function cfgp_delete_post_from_global($post_id) {
 	restore_current_blog();
 }
 if (cfgp_is_installed()) {
-	add_action('delete_post', 'cfgp_delete_post_from_global');
+	add_action('before_delete_post', 'cfgp_delete_post_from_global');
 }
 
 
