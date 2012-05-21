@@ -621,13 +621,13 @@ function cfgp_batch_import_blog($blog_id, $offset, $increment) {
 }
 function cfgp_do_delete_post($cfgp_clone_id) {
 	/* remove the delete action, so not to infinite loop */
-	remove_action('delete_post', 'cfgp_delete_post_from_global');
+	remove_action('before_delete_post', 'cfgp_delete_post_from_global');
 	
 	/* actually delete the clone post */
 	$delete_results = wp_delete_post($cfgp_clone_id);
 	
 	/* put action back */
-	add_action('delete_post', 'cfgp_delete_post_from_global');
+	add_action('before_delete_post', 'cfgp_delete_post_from_global');
 	
 	return $delete_results;
 }
