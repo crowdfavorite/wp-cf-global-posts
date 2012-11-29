@@ -1029,9 +1029,9 @@ function cfgp_admin_menu() {
 	
 	if (current_user_can('manage_options')) {
 		add_options_page(
-			__('CF Global Posts Functions', '')
-			, __('CF Global Posts', '')
-			, 10
+			__('CF Global Posts Functions', 'cf-global-posts')
+			, __('CF Global Posts', 'cf-global-posts')
+			, 'manage_options'
 			, basename(__FILE__)
 			, 'cfgp_operations_form'
 		);
@@ -1139,7 +1139,7 @@ function cfgp_setting($option) {
 function cfgp_plugin_action_links($links, $file) {
 	$plugin_file = basename(__FILE__);
 	if (basename($file) == $plugin_file) {
-		$settings_link = '<a href="options-general.php?page='.$plugin_file.'">'.__('Settings', '').'</a>';
+		$settings_link = '<a href="options-general.php?page='.$plugin_file.'">'.__('Settings', 'cf-global-posts').'</a>';
 		array_unshift($links, $settings_link);
 	}
 	return $links;
@@ -1201,7 +1201,7 @@ function cfgp_settings_form() {
 	print('
 		</fieldset>
 		<p class="submit">
-			<input type="submit" name="submit" value="'.__('Save Settings', '').'" />
+			<input type="submit" name="submit" value="'.__('Save Settings', 'cf-global-posts').'" />
 		</p>
 	</form>
 </div>
