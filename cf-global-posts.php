@@ -1064,4 +1064,20 @@ function cfgp_save_settings() {
 		update_option($key, $value);
 	}
 }
+
+/*************************
+* Feed Functions *
+*************************/
+function cfgp_feed_url_add_filter() {
+	if (is_feed()) {
+		add_filter('home_url', 'cfgp_feed_home_url');
+	}
+}
+add_action('do_feed_rss2', 'cfgp_feed_url_add_filter', 1);
+
+function cfgp_feed_home_url() {
+	remove_filter('home_url', 'feed_url');
+	return cfgp_get_home_url();
+}
+
 ?>
