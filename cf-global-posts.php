@@ -1076,7 +1076,7 @@ function cfgp_feed_url_add_filter() {
 add_action('do_feed_rss2', 'cfgp_feed_url_add_filter', 1);
 
 function cfgp_feed_home_url() {
-	remove_filter('home_url', 'feed_url');
+	remove_filter('home_url', 'cfgp_feed_home_url');
 	return cfgp_get_home_url();
 }
 
